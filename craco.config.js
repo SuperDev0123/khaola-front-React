@@ -31,4 +31,10 @@ module.exports = {
       "^@/(.+)": "<rootDir>/src/$1",
     },
   },
+  resolve: {
+    extensions: ['', '.js', '.jsx', '.css'],
+    modulesDirectories: [
+      'node_modules'
+    ]
+  },
 };
