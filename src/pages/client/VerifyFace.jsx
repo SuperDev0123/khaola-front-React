@@ -61,8 +61,8 @@ const VerifyFace = ({ ...props }) => {
   const VerifyFace = async () => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
-    const video = playRef.current;
-    ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight)
+    // const video = playRef.current;
+    // ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight)
     const option = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.3 });
     const results = await faceapi
       .detectAllFaces(canvas, option)
@@ -92,19 +92,40 @@ const VerifyFace = ({ ...props }) => {
 
   const Capture = () => {
     // setTimeout(async () => {
-      message.info('Verifying')
-      setLoading(true);
-      setIsProgress(true);
-      playRef.current.pause();
-      setTimeout(VerifyFace, 1000);
-      // VerifyFace();
-      return
+    message.info('Verifying')
+    setLoading(true);
+    setIsProgress(true);
+    playRef.current.pause();
+    setTimeout(VerifyFace, 1000);
+    // VerifyFace();
+    return
     // }, 3000)
   }
   const Retry = () => {
     setIsSuccess(0);
     playRef.current.play();
   }
+
+
+  const onChange = (e) => {
+    message.info('Verifying')
+    setLoading(true);
+    setIsProgress(true);
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    let imageFile = e.target.files[0]; //here we get the image file
+    var reader = new FileReader();
+    reader.readAsDataURL(imageFile);
+    reader.onloadend = function (e) {
+      var myImage = new Image(); // Creates image object
+      myImage.src = e.target.result; // Assigns converted image to image object
+      myImage.onload = function (ev) {
+        ctx.drawImage(myImage, 0, 0); // Draws the image on canvas
+        VerifyFace();
+      }
+    }
+  }
+
   return (
     <Spin spinning={loading} delay={0}>
       <Typography style={{ padding: '30px 0', textAlign: 'center' }}>Take a photo of your entire face</Typography>
@@ -131,8 +152,12 @@ const VerifyFace = ({ ...props }) => {
         {isSuccess > 0 ? (
           isSuccess == 1 ? '' :
             <Button type="danger" onClick={Retry}>Retry</Button>
-        ) :
-          <Button type="primary" onClick={Capture}>Capture</Button>}
+        ) : (
+          <>
+            <Button type="primary" onClick={Capture} className="hidden">Capture</Button>
+            <input type="file" id="imageInput" accept="image/*" onChange={onChange} />
+          </>
+        )}
       </Row>
     </Spin>
   );

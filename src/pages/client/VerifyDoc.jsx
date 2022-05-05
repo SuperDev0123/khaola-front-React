@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Spin, Typography, Button, List, Row, Col, Divider, message } from "antd";
+import { Spin, Typography, Button, List, Row, Col, Divider, message, Upload } from "antd";
 import Tesseract from 'tesseract.js';
 import { createScheduler, createWorker } from 'tesseract.js';
 import * as faceapi from 'face-api.js';
 import preprocessImage from '@/utils/preprocess';
 import moment from "moment";
+import { UploadOutlined } from "@ant-design/icons";
 const arabicMonths = ['جانفي', 'فيفري', 'مارس', 'أفريل', 'ماي', 'جوان', 'جويلية', 'أوت', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر']
 
 const verifyNation = (lines) => {
@@ -70,8 +71,8 @@ const verifyPassport = (lines) => {
       let date = temp.match(/[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]/);
       if (date) {
         birthDate = date[0];
-        lastName = extractName(lines[index - 2].text)
-        firstName = extractName(lines[index - 3].text)
+        lastName = extractName(lines[index - 3].text)
+        firstName = extractName(lines[index - 5].text)
       }
     }
   })
@@ -108,19 +109,19 @@ const Constants = {
   nation: {
     title: 'National Card',
     lang: 'ara',
-    threshold: 600,
+    threshold: 480,
     verify: verifyNation
   },
   driving: {
     title: 'Driving License',
     lang: 'eng',
-    threshold: 500,
+    threshold: 450,
     verify: verifyDriving
   },
   passport: {
     title: 'Passport',
     lang: 'eng',
-    threshold: 800,
+    threshold: 600,
     verify: verifyPassport
   }
 }
@@ -180,62 +181,48 @@ const VerifyDoc = ({ ...props }) => {
     const ctx = canvas.getContext('2d');
     ctx.putImageData(preprocessImage(profileRef.current, threshold), 0, 0);
     const dataUrl = canvas.toDataURL("image/jpeg");
-    // Tesseract.recognize(
-    //   dataUrl, docInfo.lang,
-    //   {
-    //     logger: m => console.log(m)
-    //   }
-    // )
-    //   .catch(err => {
-    //     console.error(err);
-    //     setLoading(false)
-    //     setIsProgress(false)
-    //   })
-    //   .then(async result => {
-    //     console.log(result.data.text)
-    //     let verifyRes = docInfo.verify(result.data.lines)
-    //     console.log(verifyRes)
-    //     if (verifyRes.isSuccess) {
-    //       const option = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.3 });
-    //       const singleResult = await faceapi
-    //         .detectSingleFace(profileRef.current, option)
-    //         .withFaceLandmarks()
-    //         .withFaceDescriptor()
-    //       console.log(singleResult)
-    //       setLoading(false)
-    //       setIsProgress(false)
-    //       if (singleResult) {
-    //         message.success('Verify Success')
-    //         setFaceDescriptor(singleResult.descriptor)
-    //         setIsSuccess(1);
-    //         setUserInfo(verifyRes, true)
-    //       }
-    //     }
-    //     // threshold = threshold - 50;
-    //     // if(threshold > 300){
-    //     //   verifyDoc(threshold);
-    //     // }
-    //     else {
-    //       message.error('Verify failed')
-    //       setLoading(false)
-    //       setIsProgress(false)
-    //       setIsSuccess(2);
-    //     }
-    //   })
-    const option = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.3 });
-    const singleResult = await faceapi
-      .detectSingleFace(profileRef.current, option)
-      .withFaceLandmarks()
-      .withFaceDescriptor()
-    console.log(singleResult)
-    setLoading(false)
-    setIsProgress(false)
-    if (singleResult) {
-      message.success('Verify Success')
-      setFaceDescriptor(singleResult.descriptor)
-      setIsSuccess(1);
-      setUserInfo({ isSuccess: true, firstName: 'Test', lastName: 'User', birthDate: '1988-04-12' }, true)
-    }
+    Tesseract.recognize(
+      dataUrl, docInfo.lang,
+      {
+        logger: m => console.log(m)
+      }
+    )
+      .catch(err => {
+        console.error(err);
+        setLoading(false)
+        setIsProgress(false)
+      })
+      .then(async result => {
+        console.log(result.data.text)
+        let verifyRes = docInfo.verify(result.data.lines)
+        console.log(verifyRes)
+        if (verifyRes.isSuccess) {
+          const option = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.3 });
+          const singleResult = await faceapi
+            .detectSingleFace(profileRef.current, option)
+            .withFaceLandmarks()
+            .withFaceDescriptor()
+          console.log(singleResult)
+          setLoading(false)
+          setIsProgress(false)
+          if (singleResult) {
+            message.success('Verify Success')
+            setFaceDescriptor(singleResult.descriptor)
+            setIsSuccess(1);
+            setUserInfo(verifyRes, true)
+          }
+        }
+        // threshold = threshold - 50;
+        // if(threshold > 300){
+        //   verifyDoc(threshold);
+        // }
+        else {
+          message.error('Verify failed')
+          setLoading(false)
+          setIsProgress(false)
+          setIsSuccess(2);
+        }
+      })
   }
 
   const Capture = () => {
@@ -256,8 +243,29 @@ const VerifyDoc = ({ ...props }) => {
     setIsSuccess(0);
     playRef.current.play();
   }
+
+  const onChange = (e) => {
+    message.info('Verifying')
+    setLoading(true);
+    setIsProgress(true);
+    let canvas = profileRef.current;
+    let ctx = canvas.getContext('2d');
+    let imageFile = e.target.files[0]; //here we get the image file
+    var reader = new FileReader();
+    reader.readAsDataURL(imageFile);
+    reader.onloadend = function (e) {
+      var myImage = new Image(); // Creates image object
+      myImage.src = e.target.result; // Assigns converted image to image object
+      myImage.onload = function (ev) {
+        ctx.drawImage(myImage, 0, 0); // Draws the image on canvas
+        verifyDoc(docInfo.threshold);
+      }
+    }
+  }
+
+
   return (
-    <Spin spinning={loading} delay={0}>
+    <Spin spinning={loading} delay={0} >
       <Typography style={{ padding: '30px 0', textAlign: 'center' }}>Take a photo of the frontside</Typography>
       <Row>
         <Col span={24} md={8}>
@@ -283,10 +291,13 @@ const VerifyDoc = ({ ...props }) => {
         {isSuccess > 0 ? (
           isSuccess == 1 ? '' :
             <Button type="danger" onClick={Retry}>Retry</Button>
-        ) :
-          <Button type="primary" onClick={Capture}>Capture</Button>}
+        ) : (<>
+          <Button type="primary" onClick={Capture} className="hidden">Capture</Button>
+          <input type="file" id="imageInput" accept="image/*" onChange={onChange} />
+        </>
+        )}
       </Row>
-    </Spin>
+    </Spin >
   );
 };
 
