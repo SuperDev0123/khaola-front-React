@@ -91,7 +91,7 @@ const VerifyFace = ({ ...props }) => {
   }
 
   const Capture = () => {
-    setTimeout(async () => {
+    // setTimeout(async () => {
       message.info('Verifying')
       setLoading(true);
       setIsProgress(true);
@@ -99,7 +99,7 @@ const VerifyFace = ({ ...props }) => {
       setTimeout(VerifyFace, 1000);
       // VerifyFace();
       return
-    }, 3000)
+    // }, 3000)
   }
   const Retry = () => {
     setIsSuccess(0);

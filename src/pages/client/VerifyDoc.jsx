@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Spin, Typography, Button, List, Row, Col, Divider, message } from "antd";
 import Tesseract from 'tesseract.js';
+import { createScheduler, createWorker } from 'tesseract.js';
 import * as faceapi from 'face-api.js';
 import preprocessImage from '@/utils/preprocess';
 import moment from "moment";
@@ -28,7 +29,7 @@ const verifyNation = (lines) => {
         })
         if (month <= 0) return;
         birthDate = `${date[0]}-${month}-${textArr[index - 2]}`;
-        if(!moment(birthDate)) return;
+        if (!moment(birthDate)) return;
         lastName = (lines[i - 2] && lines[i - 2].text)
         firstName = (lines[i - 2] && lines[i - 3].text)
       }
@@ -126,8 +127,8 @@ const Constants = {
 
 const VerifyDoc = ({ ...props }) => {
   const { docType, setUserInfo, setIsProgress, setFaceDescriptor } = props;
-  const [loading, setLoading] = React.useState(true);
-  const [isSuccess, setIsSuccess] = React.useState(0);
+  const [loading, setLoading] = useState(true);
+  const [isSuccess, setIsSuccess] = useState(0);
   const docInfo = Constants[docType];
   const canvasRef = useRef(null);
   const profileRef = useRef(null);
@@ -214,7 +215,7 @@ const VerifyDoc = ({ ...props }) => {
         // if(threshold > 300){
         //   verifyDoc(threshold);
         // }
-        else{
+        else {
           message.error('Verify failed')
           setLoading(false)
           setIsProgress(false)
@@ -224,7 +225,7 @@ const VerifyDoc = ({ ...props }) => {
   }
 
   const Capture = () => {
-    setTimeout(() => {
+    // setTimeout(() => {
       message.info('Verifying')
       setLoading(true);
       setIsProgress(true);
@@ -235,7 +236,7 @@ const VerifyDoc = ({ ...props }) => {
       ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight)
       // verifyDoc(1000);
       verifyDoc(docInfo.threshold);
-    }, 3000)
+    // }, 3000)
   }
   const Retry = () => {
     setIsSuccess(0);
