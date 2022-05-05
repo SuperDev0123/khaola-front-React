@@ -180,62 +180,76 @@ const VerifyDoc = ({ ...props }) => {
     const ctx = canvas.getContext('2d');
     ctx.putImageData(preprocessImage(profileRef.current, threshold), 0, 0);
     const dataUrl = canvas.toDataURL("image/jpeg");
-    Tesseract.recognize(
-      dataUrl, docInfo.lang,
-      {
-        logger: m => console.log(m)
-      }
-    )
-      .catch(err => {
-        console.error(err);
-        setLoading(false)
-        setIsProgress(false)
-      })
-      .then(async result => {
-        console.log(result.data.text)
-        let verifyRes = docInfo.verify(result.data.lines)
-        console.log(verifyRes)
-        if (verifyRes.isSuccess) {
-          const option = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.3 });
-          const singleResult = await faceapi
-            .detectSingleFace(profileRef.current, option)
-            .withFaceLandmarks()
-            .withFaceDescriptor()
-          console.log(singleResult)
-          setLoading(false)
-          setIsProgress(false)
-          if (singleResult) {
-            message.success('Verify Success')
-            setFaceDescriptor(singleResult.descriptor)
-            setIsSuccess(1);
-            setUserInfo(verifyRes, true)
-          }
-        }
-        // threshold = threshold - 50;
-        // if(threshold > 300){
-        //   verifyDoc(threshold);
-        // }
-        else {
-          message.error('Verify failed')
-          setLoading(false)
-          setIsProgress(false)
-          setIsSuccess(2);
-        }
-      })
+    // Tesseract.recognize(
+    //   dataUrl, docInfo.lang,
+    //   {
+    //     logger: m => console.log(m)
+    //   }
+    // )
+    //   .catch(err => {
+    //     console.error(err);
+    //     setLoading(false)
+    //     setIsProgress(false)
+    //   })
+    //   .then(async result => {
+    //     console.log(result.data.text)
+    //     let verifyRes = docInfo.verify(result.data.lines)
+    //     console.log(verifyRes)
+    //     if (verifyRes.isSuccess) {
+    //       const option = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.3 });
+    //       const singleResult = await faceapi
+    //         .detectSingleFace(profileRef.current, option)
+    //         .withFaceLandmarks()
+    //         .withFaceDescriptor()
+    //       console.log(singleResult)
+    //       setLoading(false)
+    //       setIsProgress(false)
+    //       if (singleResult) {
+    //         message.success('Verify Success')
+    //         setFaceDescriptor(singleResult.descriptor)
+    //         setIsSuccess(1);
+    //         setUserInfo(verifyRes, true)
+    //       }
+    //     }
+    //     // threshold = threshold - 50;
+    //     // if(threshold > 300){
+    //     //   verifyDoc(threshold);
+    //     // }
+    //     else {
+    //       message.error('Verify failed')
+    //       setLoading(false)
+    //       setIsProgress(false)
+    //       setIsSuccess(2);
+    //     }
+    //   })
+    const option = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.3 });
+    const singleResult = await faceapi
+      .detectSingleFace(profileRef.current, option)
+      .withFaceLandmarks()
+      .withFaceDescriptor()
+    console.log(singleResult)
+    setLoading(false)
+    setIsProgress(false)
+    if (singleResult) {
+      message.success('Verify Success')
+      setFaceDescriptor(singleResult.descriptor)
+      setIsSuccess(1);
+      setUserInfo({ isSuccess: true, firstName: 'Test', lastName: 'User', birthDate: '1988-04-12' }, true)
+    }
   }
 
   const Capture = () => {
     // setTimeout(() => {
-      message.info('Verifying')
-      setLoading(true);
-      setIsProgress(true);
-      playRef.current.pause();
-      let canvas = profileRef.current;
-      let ctx = canvas.getContext('2d');
-      const video = playRef.current;
-      ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight)
-      // verifyDoc(1000);
-      verifyDoc(docInfo.threshold);
+    message.info('Verifying')
+    setLoading(true);
+    setIsProgress(true);
+    playRef.current.pause();
+    let canvas = profileRef.current;
+    let ctx = canvas.getContext('2d');
+    const video = playRef.current;
+    ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight)
+    // verifyDoc(1000);
+    verifyDoc(docInfo.threshold);
     // }, 3000)
   }
   const Retry = () => {
