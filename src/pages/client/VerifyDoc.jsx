@@ -115,7 +115,7 @@ const Constants = {
   driving: {
     title: 'Driving License',
     lang: 'eng',
-    threshold: 450,
+    threshold: 480,
     verify: verifyDriving
   },
   passport: {
@@ -257,7 +257,11 @@ const VerifyDoc = ({ ...props }) => {
       var myImage = new Image(); // Creates image object
       myImage.src = e.target.result; // Assigns converted image to image object
       myImage.onload = function (ev) {
-        ctx.drawImage(myImage, 0, 0); // Draws the image on canvas
+        // ctx.translate(canvas.width * 0.5, canvas.height * 0.5);
+        // ctx.rotate(90 * Math.PI / 180)
+        // ctx.translate(-canvas.width * 0.5, -canvas.height * 0.5);
+        ctx.drawImage(myImage, 0, 0, canvas.width, canvas.height); // Draws the image on 
+        ctx.restore();
         verifyDoc(docInfo.threshold);
       }
     }
@@ -282,7 +286,7 @@ const VerifyDoc = ({ ...props }) => {
           <video playsInline autoPlay muted ref={playRef} width="100%" height="100%" />
           <video playsInline autoPlay muted width={1000} height={500} ref={screenshotRef} className="hidden" />
           <canvas ref={canvasRef} width={1000} height={500} style={{ position: 'fixed', left: 0, top: 0 }} className="hidden"></canvas>
-          <canvas ref={profileRef} width={1000} height={500} style={{ position: 'fixed', left: 0 }} className="hidden"></canvas>
+          <canvas ref={profileRef} width={1000} height={500} style={{ position: 'fixed', left: 0, top: 0 }} className="hidden"></canvas>
         </Col>
       </Row>
       <Row style={{ padding: 10 }} align="end">

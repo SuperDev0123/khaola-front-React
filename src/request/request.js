@@ -4,20 +4,22 @@ import { token as tokenCookies } from "@/auth";
 import errorHandler from "./errorHandler";
 import successHandler from "./successHandler";
 
-const headersInstance = { [ACCESS_TOKEN_NAME]: tokenCookies.get() };
+const headersInstance = () => {
+  return { [ACCESS_TOKEN_NAME]: tokenCookies.get() };
+}
 
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
   timeout: 30000,
   headers: {
-    ...headersInstance,
+    ...headersInstance(),
   },
 });
 
 const request = {
   create: async (entity, jsonData) => {
     axiosInstance.defaults.headers = {
-      ...headersInstance,
+      ...headersInstance(),
     };
     console.log("jsonData", jsonData);
     try {
@@ -29,7 +31,7 @@ const request = {
   },
   read: async (entity, id) => {
     axiosInstance.defaults.headers = {
-      ...headersInstance,
+      ...headersInstance(),
     };
     try {
       const response = await axiosInstance.get(entity + "/read/" + id);
@@ -40,7 +42,7 @@ const request = {
   },
   update: async (entity, id, jsonData) => {
     axiosInstance.defaults.headers = {
-      ...headersInstance,
+      ...headersInstance(),
     };
     try {
       const response = await axiosInstance.patch(
@@ -55,7 +57,7 @@ const request = {
 
   delete: async (entity, id, option = {}) => {
     axiosInstance.defaults.headers = {
-      ...headersInstance,
+      ...headersInstance(),
     };
     try {
       const response = await axiosInstance.delete(entity + "/delete/" + id);
@@ -67,7 +69,7 @@ const request = {
 
   filter: async (entity, option = {}) => {
     axiosInstance.defaults.headers = {
-      ...headersInstance,
+      ...headersInstance(),
     };
     try {
       let filter = option.filter ? "filter=" + option.filter : "";
@@ -92,7 +94,7 @@ const request = {
         let question = option.question ? "&q=" + option.question : "";
         query = `?${fields}${question}`;
       }
-      // headersInstance.cancelToken = source.token;
+      // headersInstance().cancelToken = source.token;
       const response = await axiosInstance.get(entity + "/search" + query, {
         cancelToken: source.token,
       });
@@ -107,7 +109,6 @@ const request = {
     axiosInstance.defaults.headers = {
       [ACCESS_TOKEN_NAME]: tokenCookies.get(),
     };
-    console.log(tokenCookies.get());
     try {
       let query = "";
       if (Object.keys(option).length > 0) {
@@ -125,7 +126,7 @@ const request = {
 
   post: async (entityUrl, jsonData, option = {}) => {
     axiosInstance.defaults.headers = {
-      ...headersInstance,
+      ...headersInstance(),
     };
     try {
       const response = await axiosInstance.post(entityUrl, jsonData);
@@ -135,8 +136,9 @@ const request = {
     }
   },
   get: async (entityUrl) => {
+    console.log(headersInstance(), 'headerInstance')
     axiosInstance.defaults.headers = {
-      ...headersInstance,
+      ...headersInstance(),
     };
     try {
       const response = await axiosInstance.get(entityUrl);
@@ -147,7 +149,7 @@ const request = {
   },
   patch: async (entityUrl, jsonData) => {
     axiosInstance.defaults.headers = {
-      ...headersInstance,
+      ...headersInstance(),
     };
     try {
       const response = await axiosInstance.patch(entityUrl, jsonData);

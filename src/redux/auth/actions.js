@@ -10,8 +10,6 @@ export const login = (loginAdminData) => async (dispatch) => {
   });
   const data = await authService.login(loginAdminData);
 
-  console.log(data)
-
   if (data.success === true) {
     const authValue = {
       current: data.result.admin,
@@ -58,7 +56,7 @@ export const logout = () => async (dispatch) => {
   dispatch({
     type: actionTypes.LOGOUT_SUCCESS,
   });
-  history.push("/login");
+  history.push("/")
 };
 
 export const verifyClient = (loginAdminData) => async (dispatch) => {

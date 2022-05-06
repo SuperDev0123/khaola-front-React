@@ -53,7 +53,7 @@ export default function ClientList() {
               </h3>
             </div>
             <Modal buttonContent={'Add Client'} headerContent={'Add client'} modalContent={<AddClientForm />} handleOk={() => handleOk()} buttonStyle={{ width: '20%', float: 'right', marginRight: 20, marginBottom: 5 }} />
-            <ClientTable entity={"client"} dataTableColumns={leadColumns} canModify={false} />
+            <ClientTable url={"client/my_list"} dataTableColumns={leadColumns} modify={{ delete: true }} />
           </div>
         </Col>
       </Row>

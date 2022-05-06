@@ -8,6 +8,10 @@ const Login = lazy(() =>
   import(/*webpackChunkName:'LoginPage'*/ "@/pages/auth/Login")
 );
 
+const Logout = lazy(() =>
+  import(/*webpackChunkName:'Logout'*/ "@/pages/auth/Logout")
+);
+
 const Register = lazy(() =>
   import(/*webpackChunkName:'RegisterPage'*/ "@/pages/auth/Register")
 );
@@ -28,6 +32,7 @@ export default function AuthRouter() {
         <Switch location={location} key={location.pathname}>
           <PublicRoute path="/verify/:id/:token" component={EmailVerify} exact />
           <PublicRoute component={Register} path="/register" exact />
+          <PublicRoute component={Logout} path="/logout" exact />
           <PublicRoute
             path="/"
             component={Login}

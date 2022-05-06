@@ -22,6 +22,7 @@ const LoginPage = () => {
   // }
   const dispatch = useDispatch();
   const onFinish = (values) => {
+    console.log(values)
     dispatch(login(values));
   };
   return (

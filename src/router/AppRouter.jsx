@@ -3,6 +3,7 @@ import { Redirect, Route, Switch, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import PrivateRoute from "./PrivateRoute";
 import PublicRoute from "./PublicRoute";
+import ProviderRoute from "./PublicRoute";
 import PageLoader from "@/components/PageLoader";
 
 
@@ -26,7 +27,7 @@ const VerifyCall = lazy(() =>
 );
 
 const Logout = lazy(() =>
-  import(/*webpackChunkName:'LogoutPage'*/ "@/pages/Logout")
+  import(/*webpackChunkName:'LogoutPage'*/ "@/pages/auth/Logout")
 );
 const NotFound = lazy(() =>
   import(/*webpackChunkName:'NotFoundPage'*/ "@/pages/NotFound")
@@ -39,16 +40,15 @@ export default function AppRouter() {
   useEffect(() => {
     console.log("role : ", current.role);
   }, [current.role]);
-  console.log(current.id)
   if (current.role === 'provider')
     return (
       <Suspense fallback={<PageLoader />}>
         <AnimatePresence exitBeforeEnter initial={false}>
           <Switch location={location} key={location.pathname}>
+            <PrivateRoute component={Logout} path="/logout" exact />
             <Route path="/" component={ClientList} render={() => <Redirect to="/clients" />} />
             <PrivateRoute path="/clients" component={ClientList} exact />
 
-            <PrivateRoute component={Logout} path="/logout" exact />
             <PublicRoute path="/login" render={() => <Redirect to="/" />} />
             <Route
               path="*"

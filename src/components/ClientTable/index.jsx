@@ -17,9 +17,9 @@ export default function RecentTable({ ...props }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [showSize, setShowSize] = useState(5);
 
-  let { entity, dataTableColumns, canModify } = props;
+  let { entity, dataTableColumns, modify, url } = props;
 
-  if (canModify) {
+  if (Object.keys(modify).length > 0) {
     dataTableColumns = [
       ...dataTableColumns,
       {
@@ -58,20 +58,46 @@ export default function RecentTable({ ...props }) {
         console.log(error);
       }
     }
+
+    async function Delete() {
+      console.log(row)
+      try {
+        await request.post('client', 'test', {
+          client_id: row._id,
+          status: !row.status,
+        });
+        location.reload()
+      } catch (error) {
+        console.log(error);
+      }
+    }
+
     return (
       <Menu style={{ width: 130 }}>
-        <Menu.Item icon={<EyeOutlined />} onClick={Verification}>
-          Verification
-        </Menu.Item>
-        <Menu.Item icon={<CheckOutlined />} onClick={Edit}>
-          Change Status
-        </Menu.Item>
+        {modify.verification && (
+          <Menu.Item icon={<EyeOutlined />} onClick={Verification} key="verification">
+            Verification
+          </Menu.Item>
+        )}
+        {modify.status && (
+          <Menu.Item icon={<CheckOutlined />} onClick={Edit} key="status">
+            Change Status
+          </Menu.Item>
+        )}
+        {modify.delete && (
+          <Menu.Item icon={<DeleteOutlined />} onClick={Delete} key="delete">
+            Delete
+          </Menu.Item>
+        )}
       </Menu>
     );
   }
 
   const asyncList = () => {
-    return request.list(entity);
+    if (entity)
+      return request.list(entity);
+    if (url)
+      return request.get(url);
   };
   const { result, isLoading, isSuccess } = useFetch(asyncList);
   const paginationItems = () => {
