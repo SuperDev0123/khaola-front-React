@@ -152,7 +152,7 @@ const VerifyDoc = ({ ...props }) => {
     const constraints = {
       audio: false,
       video: {
-        facingMode
+        facingMode,
       }
     };
     navigator.mediaDevices.getUserMedia(constraints).then((stream) => {
@@ -177,52 +177,47 @@ const VerifyDoc = ({ ...props }) => {
   }, []);
 
   const verifyDoc = async (threshold) => {
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    ctx.putImageData(preprocessImage(profileRef.current, threshold), 0, 0);
-    const dataUrl = canvas.toDataURL("image/jpeg");
-    Tesseract.recognize(
-      dataUrl, docInfo.lang,
-      {
-        logger: m => console.log(m)
-      }
-    )
-      .catch(err => {
-        console.error(err);
-        setLoading(false)
-        setIsProgress(false)
-      })
-      .then(async result => {
-        console.log(result.data.text)
-        let verifyRes = docInfo.verify(result.data.lines)
-        console.log(verifyRes)
-        if (verifyRes.isSuccess) {
-          const option = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.3 });
-          const singleResult = await faceapi
-            .detectSingleFace(profileRef.current, option)
-            .withFaceLandmarks()
-            .withFaceDescriptor()
-          console.log(singleResult)
-          setLoading(false)
-          setIsProgress(false)
-          if (singleResult) {
-            message.success('Verify Success')
-            setFaceDescriptor(singleResult.descriptor)
-            setIsSuccess(1);
-            setUserInfo(verifyRes, true)
+    return new Promise((resolve, reject) => {
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext('2d');
+      ctx.putImageData(preprocessImage(profileRef.current, threshold), 0, 0);
+      const dataUrl = canvas.toDataURL("image/jpeg");
+      Tesseract.recognize(
+        dataUrl, docInfo.lang,
+        {
+          logger: m => console.log(m)
+        }
+      )
+        .catch(err => {
+          console.error(err);
+          resolve({ isSuccess: false, message: 'verify error' })
+        })
+        .then(async result => {
+          console.log(result.data.text)
+          let verifyRes = docInfo.verify(result.data.lines)
+          console.log(verifyRes)
+          if (verifyRes.isSuccess) {
+            const option = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.3 });
+            const singleResult = await faceapi
+              .detectSingleFace(profileRef.current, option)
+              .withFaceLandmarks()
+              .withFaceDescriptor()
+
+            if (singleResult) {
+              setFaceDescriptor(singleResult.descriptor)
+              setUserInfo(verifyRes, true)
+              resolve({ isSuccess: true, message: 'Verify Success' })
+            }
           }
-        }
-        // threshold = threshold - 50;
-        // if(threshold > 300){
-        //   verifyDoc(threshold);
-        // }
-        else {
-          message.error('Verify failed')
-          setLoading(false)
-          setIsProgress(false)
-          setIsSuccess(2);
-        }
-      })
+          // threshold = threshold - 50;
+          // if(threshold > 300){
+          //   verifyDoc(threshold);
+          // }
+          else {
+            resolve({ isSuccess: false, message: 'Verify failed' })
+          }
+        })
+    })
   }
 
   const Capture = () => {
@@ -256,13 +251,45 @@ const VerifyDoc = ({ ...props }) => {
     reader.onloadend = function (e) {
       var myImage = new Image(); // Creates image object
       myImage.src = e.target.result; // Assigns converted image to image object
-      myImage.onload = function (ev) {
-        // ctx.translate(canvas.width * 0.5, canvas.height * 0.5);
-        // ctx.rotate(90 * Math.PI / 180)
-        // ctx.translate(-canvas.width * 0.5, -canvas.height * 0.5);
-        ctx.drawImage(myImage, 0, 0, canvas.width, canvas.height); // Draws the image on 
-        ctx.restore();
-        verifyDoc(docInfo.threshold);
+      myImage.onload = async function (ev) {
+        // if(playRef.current.videoWidth < playRef.current.videoHeight){
+        console.log(myImage.width)
+        console.log(myImage.height)
+        let angle = myImage.width < myImage.height ? 90 : 0;
+        if (angle > 0) {
+          ctx.translate(canvas.width * 0.5, canvas.height * 0.5);
+          ctx.rotate(90 * Math.PI / 180)
+          ctx.translate(-canvas.height * 0.5, -canvas.width * 0.5);
+          ctx.drawImage(myImage, 0, 0, canvas.height, canvas.width); // Draws the image on 
+          ctx.restore();
+        }
+        else {
+          ctx.drawImage(myImage, 0, 0, canvas.width, canvas.height); // Draws the image on 
+        }
+        let { isSuccess, messageText } = await verifyDoc(docInfo.threshold);
+        if (!isSuccess) {
+          if (angle > 0) {
+            ctx.translate(canvas.height * 0.5, canvas.width * 0.5);
+            ctx.rotate(180 * Math.PI / 180)
+            ctx.translate(-canvas.height * 0.5, -canvas.width * 0.5);
+            ctx.drawImage(myImage, 0, 0, canvas.height, canvas.width); // Draws the image on 
+          }
+          else {
+            ctx.translate(canvas.width * 0.5, canvas.height * 0.5);
+            ctx.rotate(180 * Math.PI / 180)
+            ctx.translate(-canvas.height * 0.5, -canvas.width * 0.5);
+            ctx.drawImage(myImage, 0, 0, canvas.width, canvas.height); // Draws the image on 
+          }
+          ctx.restore();
+          const result = await verifyDoc(docInfo.threshold);
+          isSuccess = result.isSuccess;
+          messageText = result.message;
+        }
+        if (isSuccess) message.success(messageText)
+        if (!isSuccess) message.error(messageText)
+        setLoading(false)
+        setIsProgress(false)
+        setIsSuccess(isSuccess ? 1 : 2);
       }
     }
   }
