@@ -11,13 +11,18 @@ import {
   EditOutlined,
   DeleteOutlined,
   CheckOutlined,
+  CloseOutlined,
 } from "@ant-design/icons";
+import AddClientForm from "@/components/AddClientForm";
+import Modal from "@/components/Modal";
+
 
 export default function RecentTable({ ...props }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [showSize, setShowSize] = useState(5);
+  const [reload, setReload] = useState(false);
 
-  let { entity, dataTableColumns, modify, url } = props;
+  let { entity, dataTableColumns, modify, url, title, options = {} } = props;
 
   if (Object.keys(modify).length > 0) {
     dataTableColumns = [
@@ -36,11 +41,11 @@ export default function RecentTable({ ...props }) {
   function DropDownRowMenu({ row }) {
     async function Verification() {
       try {
-        const url = `${API_BASE_URL}client/reset_verify`;
+        const url = `${API_BASE_URL}${entity}/reset_verify`;
         await request.post(url, {
           client_id: row._id
         });
-        location.reload()
+        setReload(true)
       } catch (error) {
         console.log(error);
       }
@@ -48,7 +53,7 @@ export default function RecentTable({ ...props }) {
 
     async function Edit() {
       try {
-        const url = `${API_BASE_URL}client/reset_status`;
+        const url = `${API_BASE_URL}${entity}/reset_status`;
         await request.post(url, {
           client_id: row._id,
           status: !row.status,
@@ -60,13 +65,12 @@ export default function RecentTable({ ...props }) {
     }
 
     async function Delete() {
-      console.log(row)
-      try {
-        await request.post('client', 'test', {
-          client_id: row._id,
-          status: !row.status,
-        });
-        location.reload()
+      try {        
+        let { success, result, message } = await request.delete(entity, row._id, {});
+        console.log(success, result, message)
+        if (isSuccess) {
+          setReload(true);
+        }
       } catch (error) {
         console.log(error);
       }
@@ -74,10 +78,16 @@ export default function RecentTable({ ...props }) {
 
     return (
       <Menu style={{ width: 130 }}>
-        {modify.verification && (
-          <Menu.Item icon={<EyeOutlined />} onClick={Verification} key="verification">
-            Verification
-          </Menu.Item>
+        {modify.verify && (
+          row.isVerified ? (
+            <Menu.Item icon={<CloseOutlined />} onClick={Verification} key="verification">
+              Reject verify
+            </Menu.Item>
+          ) : (
+            <Menu.Item icon={<CheckOutlined />} onClick={Verification} key="verification">
+              Approve verify
+            </Menu.Item>
+          )
         )}
         {modify.status && (
           <Menu.Item icon={<CheckOutlined />} onClick={Edit} key="status">
@@ -93,13 +103,19 @@ export default function RecentTable({ ...props }) {
     );
   }
 
+  const handleOk = () => {
+    document.getElementById('AddClientbtn').click();
+  }
+
   const asyncList = () => {
-    if (entity)
-      return request.list(entity);
     if (url)
       return request.get(url);
+    if (entity)
+      return request.list(entity, options);
   };
-  const { result, isLoading, isSuccess } = useFetch(asyncList);
+  const { result, isLoading, isSuccess } = useFetch(asyncList, reload);
+  if (result && reload)
+    setReload(false)
   const paginationItems = () => {
     if (isSuccess && result) return result.slice(currentPage * showSize - showSize, currentPage * showSize);
     return [];
@@ -115,9 +131,10 @@ export default function RecentTable({ ...props }) {
     console.log(current, showSize)
   }
   let total = result != null ? result.length : 0;
-
+  console.log(title)
   return (
     <>
+      {modify.add && <Modal buttonContent={`Add ${title}`} headerContent={`Add ${title}`} modalContent={<AddClientForm setReload={setReload} />} handleOk={() => handleOk()} buttonStyle={{ width: '20%', float: 'right', marginRight: 20, marginBottom: 5 }} />}
       <Table
         columns={dataTableColumns}
         rowKey={(item) => item._id}

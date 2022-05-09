@@ -10,6 +10,7 @@ const ConfirmInfo = ({ ...props }) => {
     setIsDone(true);
   }, []);
   const onRequiredTypeChange = (temp, values) => {
+    console.log(values)
     const { firstName, lastName, birthDate } = values;
     if (firstName && lastName && birthDate) {
       setIsDone(true);
@@ -21,16 +22,13 @@ const ConfirmInfo = ({ ...props }) => {
     }
   };
 
-  console.log(userInfo)
-  console.log(userInfo.birthDate)
-  console.log(moment(userInfo.birthDate))
 
   return (
     <>
       <Typography style={{ padding: '30px 0', textAlign: 'center' }}>Confirm ID Infomation</Typography>
       <Form
         layout="vertical"
-        initialValues={{ firstName: userInfo.firstName, lastName: userInfo.lastName }}
+        initialValues={{ firstName: userInfo.firstName, lastName: userInfo.lastName, birthDate: moment(userInfo.birthDate) }}
         onValuesChange={onRequiredTypeChange}
       >
         <Form.Item label="First Name" required name="firstName">
@@ -40,7 +38,8 @@ const ConfirmInfo = ({ ...props }) => {
           <Input placeholder="Last Name" />
         </Form.Item>
         <Form.Item label="DatePicker" name="birthDate">
-          <DatePicker defaultValue={moment(userInfo.birthDate)} />
+          <DatePicker />
+          {/* <DatePicker defaultValue={moment(userInfo.birthDate)} /> */}
         </Form.Item>
       </Form>
     </>

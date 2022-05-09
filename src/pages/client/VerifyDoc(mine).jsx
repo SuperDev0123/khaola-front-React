@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Spin, Typography, Button, List, Row, Col, Divider, message, Upload } from "antd";
+import Tesseract from 'tesseract.js';
+import { createScheduler, createWorker } from 'tesseract.js';
 import * as faceapi from 'face-api.js';
+import preprocessImage from '@/utils/preprocess';
 import moment from "moment";
-import axios from "axios";
-import qs from 'qs';
 import { UploadOutlined } from "@ant-design/icons";
 const arabicMonths = ['جانفي', 'فيفري', 'مارس', 'أفريل', 'ماي', 'جوان', 'جويلية', 'أوت', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر']
 
@@ -12,11 +13,11 @@ const verifyNation = (lines) => {
   let isStart = false;
   lines.forEach((line, i) => {
     if (!birthDate) {
-      let temp = line.LineText;
+      let temp = line.text;
       let date = temp.match(/[0-9][0-9][0-9][0-9]/);
       if (date && date > 1900 && date < 2100) {
         console.log(date)
-        let textArr = line.LineText.split(' ')
+        let textArr = line.text.split(' ')
         textArr = textArr.filter(val => {
           return val && val.length
         })
@@ -30,8 +31,8 @@ const verifyNation = (lines) => {
         if (month <= 0) return;
         birthDate = `${date[0]}-${month}-${textArr[index - 2]}`;
         if (!moment(birthDate)) return;
-        lastName = (lines[i - 2] && lines[i - 2].LineText)
-        firstName = (lines[i - 3] && lines[i - 3].LineText)
+        lastName = (lines[i - 2] && lines[i - 2].text)
+        firstName = (lines[i - 2] && lines[i - 3].text)
       }
     }
   })
@@ -42,20 +43,23 @@ const verifyDriving = (lines) => {
   console.log("driving")
   let firstName, lastName, birthDate;
   let isStart = false;
-  lines.forEach((line, index) => {
-    console.log(line)
-    if (!birthDate) {
-      let temp = line.LineText;
-      let date = temp.match(/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/);
-      if (date && isStart) {
-        birthDate = date[0];
-        lastName = extractName(lines[index - 2].LineText)
-        firstName = extractName(lines[index - 3].LineText)
+  lines.forEach(line => {
+    let temp = line.text;
+    if (isStart && /[A-z][A-z]/g.test(temp)) {
+      let name = extractName(temp)
+      if (!name || !name.length) return;
+      if (!firstName) {
+        firstName = name;
+        return
       }
-      if (date) isStart = true;
+      if (!lastName) {
+        lastName = name
+      }
     }
+    let date = temp.match(/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/);
+    if (!birthDate && isStart && date) birthDate = date[0];
+    if (/./g.test(temp) && /[0-9][0-9][0-9]/g.test(temp)) isStart = true;
   })
-  console.log(firstName, lastName, birthDate)
   return checkResult(firstName, lastName, birthDate)
 }
 
@@ -63,12 +67,12 @@ const verifyPassport = (lines) => {
   let firstName, lastName, birthDate;
   lines.forEach((line, index) => {
     if (!birthDate) {
-      let temp = line.LineText;
+      let temp = line.text;
       let date = temp.match(/[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]/);
       if (date) {
         birthDate = date[0];
-        lastName = extractName(lines[index - 2].LineText)
-        firstName = extractName(lines[index - 3].LineText)
+        lastName = extractName(lines[index - 2].text)
+        firstName = extractName(lines[index - 3].text)
       }
     }
   })
@@ -77,10 +81,12 @@ const verifyPassport = (lines) => {
 const extractName = (temp) => {
   if (!temp) return '';
   let name = '';
-  temp.split(' ').forEach(val => {
-    if (!name.length && val && /[A-z][A-z]/g.test(val)) name = val;
+  let digitalIndex = 1000;
+  temp.split(' ').forEach((val, index) => {
+    if(/[0-9]/g.test(val)) digitalIndex = index;
+    if (!name.length && val && /[A-z][A-z]/g.test(val) && index > digitalIndex) name = val;
   })
-  return name.replace(/[^A-z]/g, '');
+  return name;
 }
 
 const checkResult = (firstName, lastName, birthDate) => {
@@ -105,33 +111,32 @@ const Constants = {
   nation: {
     title: 'National Card',
     lang: 'ara',
-    engine: 1,
+    threshold: 480,
     verify: verifyNation
   },
   driving: {
     title: 'Driving License',
     lang: 'eng',
-    engine: 2,
+    threshold: 480,
     verify: verifyDriving
   },
   passport: {
     title: 'Passport',
     lang: 'eng',
-    engine: 2,
+    threshold: 520,
     verify: verifyPassport
   }
 }
 
 const VerifyDoc = ({ ...props }) => {
   const { docType, setUserInfo, setIsProgress, setFaceDescriptor } = props;
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [isSuccess, setIsSuccess] = useState(0);
   const docInfo = Constants[docType];
   const canvasRef = useRef(null);
   const profileRef = useRef(null);
   const screenshotRef = useRef(null);
   const playRef = useRef(null);
-  const testRef = useRef(null);
 
   let isLoaded = {
     modal: false,
@@ -174,91 +179,47 @@ const VerifyDoc = ({ ...props }) => {
   }, []);
 
   const verifyDoc = async (threshold) => {
-    return new Promise(async (resolve, reject) => {
-      const canvas = profileRef.current;
-      const options = {
-        method: 'POST',
-        headers: { 'content-type': 'application/x-www-form-urlencoded' },
-        data: qs.stringify({
-          'apikey': "PR858KYMYHCX",
-          'filetype': "PNG, JPG",
-          'base64Image': canvas.toDataURL(),
-          'isOverlayRequired': true,
-          'language': docInfo.lang,
-          // 'detectOrientation': true,
-          'OCREngine': docInfo.engine,
-        }),
-        url: 'https://apipro2.ocr.space/parse/image'
-      };
-      axios(options).then(async (res) => {
-        console.log(res)
-        if (res.data.IsErroredOnProcessing || res.data.ParsedResults.length == 0) {
-          resolve({ isSuccess: false, message: 'Verify failed' })
-          return
+    return new Promise((resolve, reject) => {
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext('2d');
+      ctx.putImageData(preprocessImage(profileRef.current, threshold), 0, 0);
+      const dataUrl = canvas.toDataURL("image/jpeg");
+      Tesseract.recognize(
+        dataUrl, docInfo.lang,
+        {
+          logger: m => console.log(m)
         }
-        console.log(res.data.ParsedResults[0].TextOverlay.Lines)
-        let verifyRes = docInfo.verify(res.data.ParsedResults[0].TextOverlay.Lines)
-        if (verifyRes.isSuccess) {
-          const option = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.3 });
-          const singleResult = await faceapi
-            .detectSingleFace(profileRef.current, option)
-            .withFaceLandmarks()
-            .withFaceDescriptor()
+      )
+        .catch(err => {
+          console.error(err);
+          resolve({ isSuccess: false, message: 'verify error' })
+        })
+        .then(async result => {
+          console.log(result.data.text)
+          let verifyRes = docInfo.verify(result.data.lines)
+          console.log(verifyRes)
+          if (verifyRes.isSuccess) {
+            const option = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.3 });
+            const singleResult = await faceapi
+              .detectSingleFace(profileRef.current, option)
+              .withFaceLandmarks()
+              .withFaceDescriptor()
 
-          if (singleResult) {
-            setFaceDescriptor(singleResult.descriptor)
-            setUserInfo(verifyRes, true)
-            resolve({ isSuccess: true, message: 'Verify Success' })
+            if (singleResult) {
+              setFaceDescriptor(singleResult.descriptor)
+              setUserInfo(verifyRes, true)
+              resolve({ isSuccess: true, message: 'Verify Success' })
+            }
           }
-        }
-        else {
-          resolve({ isSuccess: false, message: 'Verify failed' })
-        }
-      })
-    });
-
-
-    // return new Promise((resolve, reject) => {
-    //   const canvas = canvasRef.current;
-    //   const ctx = canvas.getContext('2d');
-    //   ctx.putImageData(preprocessImage(profileRef.current, threshold), 0, 0);
-    //   const dataUrl = canvas.toDataURL("image/jpeg");
-    //   Tesseract.recognize(
-    //     dataUrl, docInfo.lang,
-    //     {
-    //       logger: m => console.log(m)
-    //     }
-    //   )
-    //     .catch(err => {
-    //       console.error(err);
-    //       resolve({ isSuccess: false, message: 'verify error' })
-    //     })
-    //     .then(async result => {
-    //       console.log(result.data.text)
-    //       let verifyRes = docInfo.verify(result.data.lines)
-    //       console.log(verifyRes)
-    //       if (verifyRes.isSuccess) {
-    //         const option = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.3 });
-    //         const singleResult = await faceapi
-    //           .detectSingleFace(profileRef.current, option)
-    //           .withFaceLandmarks()
-    //           .withFaceDescriptor()
-
-    //         if (singleResult) {
-    //           setFaceDescriptor(singleResult.descriptor)
-    //           setUserInfo(verifyRes, true)
-    //           resolve({ isSuccess: true, message: 'Verify Success' })
-    //         }
-    //       }
-    //       // threshold = threshold - 50;
-    //       // if(threshold > 300){
-    //       //   verifyDoc(threshold);
-    //       // }
-    //       else {
-    //         resolve({ isSuccess: false, message: 'Verify failed' })
-    //       }
-    //     })
-    // })
+          // threshold = threshold - 50;
+          // if(threshold > 300){
+          //   verifyDoc(threshold);
+          // }
+          else {
+            resolve({ isSuccess: false, message: 'Verify failed' })
+          }
+        })
+    })
   }
 
   const Capture = () => {
@@ -271,6 +232,7 @@ const VerifyDoc = ({ ...props }) => {
     let ctx = canvas.getContext('2d');
     const video = playRef.current;
     ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight)
+    // verifyDoc(1000);
     verifyDoc(docInfo.threshold);
     // }, 3000)
   }
@@ -292,6 +254,9 @@ const VerifyDoc = ({ ...props }) => {
       var myImage = new Image(); // Creates image object
       myImage.src = e.target.result; // Assigns converted image to image object
       myImage.onload = async function (ev) {
+        // if(playRef.current.videoWidth < playRef.current.videoHeight){
+        console.log(myImage.width)
+        console.log(myImage.height)
         let angle = myImage.width < myImage.height ? 90 : 0;
         if (angle > 0) {
           ctx.translate(canvas.width * 0.5, canvas.height * 0.5);
@@ -349,7 +314,7 @@ const VerifyDoc = ({ ...props }) => {
         <Col span={24} md={16}>
           <video playsInline autoPlay muted ref={playRef} width="100%" height="100%" />
           <video playsInline autoPlay muted width={1000} height={500} ref={screenshotRef} className="hidden" />
-          <canvas ref={canvasRef} width={1000} height={500} style={{ position: 'fixed', left: 0, top: 0 }} className="hidden"></canvas>
+          <canvas ref={canvasRef} width={1000} height={500} style={{ position: 'fixed', left: 0, top: 0 }} className="hidden1"></canvas>
           <canvas ref={profileRef} width={1000} height={500} style={{ position: 'fixed', left: 0, top: 0 }} className="hidden"></canvas>
         </Col>
       </Row>
@@ -361,7 +326,7 @@ const VerifyDoc = ({ ...props }) => {
             <Button type="danger" onClick={Retry}>Retry</Button>
         ) : (<>
           <Button type="primary" onClick={Capture} className="hidden">Capture</Button>
-          <input name="image" type="file" id="imageInput" accept="image/*" onChange={onChange} ref={testRef} />
+          <input type="file" id="imageInput" accept="image/*" onChange={onChange} />
         </>
         )}
       </Row>

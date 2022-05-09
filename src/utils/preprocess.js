@@ -1,7 +1,7 @@
-const preprocessImage = (canvas, thresholdVal = 1000) => {
+const preprocessImage = (canvas, thresholdVal = 650) => {
   const ctx = canvas.getContext('2d');
   const image = ctx.getImageData(0,0,canvas.width, canvas.height);
-  if(thresholdVal < 1000){
+  if(thresholdVal < 650){
     let threshold = getThreshold(image, thresholdVal)
     thresholdFilter(image.data, threshold);
   }

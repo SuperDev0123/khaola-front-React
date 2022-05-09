@@ -10,6 +10,8 @@ import {
   FileSyncOutlined,
   DashboardOutlined,
   TeamOutlined,
+  ShoppingCartOutlined,
+  CalculatorOutlined,
 } from "@ant-design/icons";
 
 import { useSelector } from "react-redux";
@@ -23,7 +25,7 @@ function Navigation() {
   const { current } = useSelector(selectAuth);
 
   useEffect(() => {
-    if(window.innerWidth < 768){
+    if (window.innerWidth < 768) {
       setCollapsed(true)
     }
   })
@@ -32,32 +34,36 @@ function Navigation() {
     setCollapsed(!collapsed);
   };
 
-  const providerMenus = () => {
-    return (
-      <>
-        <Menu.Item key="1" icon={<UserOutlined />}>
-          <Link to="/clients" />
-          Client List
-        </Menu.Item>
-      </>
-    )
+  const Menus = {
+    admin: [
+      {
+        icon: <ShoppingCartOutlined />,
+        link: '/providers',
+        content: 'Provider List'
+      },
+      {
+        icon: <UserOutlined />,
+        link: '/clients',
+        content: 'Client List'
+      },
+      {
+        icon: <CalculatorOutlined />,
+        link: '/reserves',
+        content: 'Video Call Requests'
+      }
+    ],
+    provider: [
+      {
+        icon: <UserOutlined />,
+        link: '/clients',
+        content: 'Client List'
+      }
+    ]
   }
-
-  const adminMenus = () => {
-    return (
-      <>
-        <Menu.Item key="1" icon={<ShoppingCartOutlined />}>
-          <Link to="/providers" />
-          Client List
-        </Menu.Item>
-        <Menu.Item key="2" icon={<UserOutlined />}>
-          <Link to="/clients" />
-          Client List
-        </Menu.Item>
-      </>
-    )
-  }
-
+  const defaultSelectedKeys = Menus[current.role].findIndex(elem => {
+    return elem.link == window.location.pathname
+  })
+  console.log(defaultSelectedKeys)
   return (
     <>
       <Sider
@@ -69,36 +75,15 @@ function Navigation() {
         }}
       >
         <div className="logo" />
-        <Menu theme="dark" defaultSelectedKeys={["1"]} mode="inline">
-          {current.role == 'provider' ? providerMenus() : ''}
-          {current.role == 'admin' ? adminMenus() : ''}
-          {/* <Menu.Item key="1" icon={<DashboardOutlined />}>
-            <Link to="/" />
-            Home Page
-          </Menu.Item>
-          <Menu.Item key="2" icon={<CustomerServiceOutlined />}>
-            <Link to="/customer">Customer</Link>
-          </Menu.Item>
-          <Menu.Item key="24" icon={<UserOutlined />}>
-            <Link to="/selectcustomer">Custom Select Customer</Link>
-          </Menu.Item>
-          <Menu.Item key="21" icon={<FileTextOutlined />}>
-            <Link to="/lead" />
-            Lead
-          </Menu.Item>
-          <Menu.Item key="3" icon={<FileSyncOutlined />}>
-            <Link to="/product" />
-            Product
-          </Menu.Item>
-          <Menu.Item key="31" icon={<TeamOutlined />}>
-            <Link to="/admin" />
-            Admins Management
-          </Menu.Item>
-
-          <Menu.Item key="32" icon={<SettingOutlined />}>
-            <Link to="/settings" />
-            Settings
-          </Menu.Item> */}
+        <Menu theme="dark" defaultSelectedKeys={[`${defaultSelectedKeys < 0 ? 1 : (defaultSelectedKeys + 1)}`]} mode="inline">
+          {Menus[current.role].map((elem, index) => {
+            return (
+              <Menu.Item key={index + 1} icon={elem.icon}>
+                <Link to={elem.link} />
+                {elem.content}
+              </Menu.Item>
+            )
+          })}
         </Menu>
       </Sider>
     </>

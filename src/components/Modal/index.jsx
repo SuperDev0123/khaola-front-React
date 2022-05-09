@@ -14,10 +14,12 @@ const App = ({ ...props }) => {
     setIsModalVisible(true);
   };
 
-  if (!handleOk) {
-    handleOk = () => {
-      setIsModalVisible(false);
-    };
+
+  const handleSubmit = () => {
+    if (handleOk) {
+      handleOk();
+    }
+    setIsModalVisible(false);
   }
 
   const handleCancel = () => {
@@ -30,7 +32,7 @@ const App = ({ ...props }) => {
         {buttonContent}
       </Button>
 
-      <Modal title={headerContent} visible={isModalVisible} onOk={handleOk} onCancel={handleCancel}>
+      <Modal title={headerContent} visible={isModalVisible} onOk={handleSubmit} onCancel={handleCancel}>
         {modalContent}
       </Modal>
     </>

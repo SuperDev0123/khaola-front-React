@@ -9,6 +9,7 @@
     "face-api.js": "^0.22.2",
     "framer-motion": "^4.1.13",
     "history": "^4.10.1",
+    "optiic": "^0.0.17",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-redux": "^7.2.2",
@@ -48,5 +49,6 @@
     "cross-env": "^7.0.3",
     "react-reconciler": "^0.26.2",
     "react-refresh": "^0.10.0"
-  }
+  },
+  "proxy": "https://api.optiic.dev"
 }

@@ -59,35 +59,29 @@ const VerifyFace = ({ ...props }) => {
   }, []);
 
   const VerifyFace = async () => {
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    // const video = playRef.current;
-    // ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight)
-    const option = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.3 });
-    const results = await faceapi
-      .detectAllFaces(canvas, option)
-      .withFaceLandmarks()
-      .withFaceDescriptors()
-    if (!results.length) {
-      message.error('Please photo your entire face.')
-      setLoading(false)
-      setIsProgress(false)
-      setIsSuccess(2);
-      return
-    }
-    const faceMatcher = new faceapi.FaceMatcher(results)
-    const bestMatch = faceMatcher.findBestMatch(faceDescriptor)
-    console.log(bestMatch)
-    setLoading(false)
-    setIsProgress(false)
-    if (bestMatch.distance > 0.5) {
-      message.error('Face verify failed')
-      setIsSuccess(2);
-      return
-    }
-    message.success('Face verify success')
-    setIsSuccess(1);
-    setIsDone(true);
+    return new Promise(async (resolve, reject) => {
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext('2d');
+      // const video = playRef.current;
+      // ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight)
+      const option = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.3 });
+      const results = await faceapi
+        .detectAllFaces(canvas, option)
+        .withFaceLandmarks()
+        .withFaceDescriptors()
+      if (!results.length) {
+        resolve({ isSuccess: false, message: 'Please photo your entire face' })
+        return
+      }
+      const faceMatcher = new faceapi.FaceMatcher(results)
+      const bestMatch = faceMatcher.findBestMatch(faceDescriptor)
+      console.log(bestMatch)
+      if (bestMatch.distance > 0.5) {
+        resolve({ isSuccess: false, message: 'Face verify failed' })
+        return
+      }
+      resolve({ isSuccess: true, message: 'Face verify success' });
+    })
   }
 
   const Capture = () => {
@@ -119,9 +113,42 @@ const VerifyFace = ({ ...props }) => {
     reader.onloadend = function (e) {
       var myImage = new Image(); // Creates image object
       myImage.src = e.target.result; // Assigns converted image to image object
-      myImage.onload = function (ev) {
-        ctx.drawImage(myImage, 0, 0); // Draws the image on canvas
-        VerifyFace();
+      myImage.onload = async function (ev) {
+        let angle = myImage.width < myImage.height ? 90 : 0;
+        if (angle > 0) {
+          ctx.translate(canvas.width * 0.5, canvas.height * 0.5);
+          ctx.rotate(90 * Math.PI / 180)
+          ctx.translate(-canvas.height * 0.5, -canvas.width * 0.5);
+          ctx.drawImage(myImage, 0, 0, canvas.height, canvas.width); // Draws the image on 
+          ctx.restore();
+        }
+        else {
+          ctx.drawImage(myImage, 0, 0, canvas.width, canvas.height); // Draws the image on 
+        }
+        let { isSuccess, messageText } = await VerifyFace();
+        if (!isSuccess) {
+          if (angle > 0) {
+            ctx.translate(canvas.height * 0.5, canvas.width * 0.5);
+            ctx.rotate(180 * Math.PI / 180)
+            ctx.translate(-canvas.height * 0.5, -canvas.width * 0.5);
+            ctx.drawImage(myImage, 0, 0, canvas.height, canvas.width); // Draws the image on 
+          }
+          else {
+            ctx.translate(canvas.width * 0.5, canvas.height * 0.5);
+            ctx.rotate(180 * Math.PI / 180)
+            ctx.translate(-canvas.height * 0.5, -canvas.width * 0.5);
+            ctx.drawImage(myImage, 0, 0, canvas.width, canvas.height); // Draws the image on 
+          }
+          ctx.restore();
+          const result = await VerifyFace();
+          isSuccess = result.isSuccess;
+          messageText = result.message;
+        }
+        if (isSuccess) message.success(messageText)
+        if (!isSuccess) message.error(messageText)
+        setLoading(false)
+        setIsProgress(false)
+        setIsSuccess(isSuccess ? 1 : 2);
       }
     }
   }
@@ -143,7 +170,7 @@ const VerifyFace = ({ ...props }) => {
         <Col span={24} md={16}>
           <video playsInline autoPlay muted ref={playRef} width="100%" height="100%" />
           <video playsInline autoPlay muted width={1000} height={500} ref={screenshotRef} className="hidden" />
-          <canvas ref={canvasRef} width={1000} height={500} style={{ position: 'fixed', left: 0 }} className="hidden"></canvas>
+          <canvas ref={canvasRef} width={1000} height={500} style={{ position: 'fixed', left: 0, top: 0 }} className="hidden"></canvas>
         </Col>
       </Row>
       <Row style={{ padding: 10 }} align="end">

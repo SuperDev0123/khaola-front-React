@@ -2,10 +2,13 @@ import { request } from "@/request";
 import { Form, Input, Button, Checkbox } from 'antd';
 import { API_BASE_URL } from "@/config/serverApiConfig";
 
-const Demo = () => {
+const Demo = ({ ...props }) => {
+  const { setReload } = props
   const onFinish = async (values) => {
     const { success, result, message } = await request.post(`${API_BASE_URL}client/register`, values);
-    if (success) { location.reload() }
+    if (success) {
+      setReload(true)
+    }
   };
 
   const onFinishFailed = (errorInfo) => {
