@@ -38,6 +38,10 @@ const VerifyCall = lazy(() =>
   import(/*webpackChunkName:'VerifyCall'*/ "@/pages/client/VerifyCall")
 );
 
+const Meeting = lazy(() =>
+  import(/*webpackChunkName:'Meeting'*/ "@/pages/auth/Meeting")
+);
+
 const Logout = lazy(() =>
   import(/*webpackChunkName:'LogoutPage'*/ "@/pages/auth/Logout")
 );
@@ -99,6 +103,7 @@ export default function AppRouter() {
             <PrivateRoute path="/verify/ID" component={VerifyID} exact />
             <PrivateRoute path="/verify/call" component={VerifyCall} exact />
             <PublicRoute path="/verify/:id/:token" component={VerifyType} exact />
+            <PublicRoute path="/meeting/" component={Meeting} exact />
             <PrivateRoute component={Logout} path="/logout" exact />
             <PublicRoute path="/login" render={() => <Redirect to="/" />} />
             <Route exact path="/" component={VerifyType} render={() => <Redirect to="/verify/type" />} />

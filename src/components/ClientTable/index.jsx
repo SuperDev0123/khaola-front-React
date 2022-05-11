@@ -15,11 +15,12 @@ import {
 } from "@ant-design/icons";
 import AddClientForm from "@/components/AddClientForm";
 import Modal from "@/components/Modal";
+import moment from 'moment'
 
 
 export default function RecentTable({ ...props }) {
   const [currentPage, setCurrentPage] = useState(1);
-  const [showSize, setShowSize] = useState(5);
+  const [showSize, setShowSize] = useState(10);
   const [reload, setReload] = useState(false);
 
   let { entity, dataTableColumns, modify, url, title, options = {} } = props;
@@ -39,11 +40,12 @@ export default function RecentTable({ ...props }) {
   }
 
   function DropDownRowMenu({ row }) {
-    async function Verification() {
+    async function Verification(isVerified) {
       try {
         const url = `${API_BASE_URL}${entity}/reset_verify`;
         await request.post(url, {
-          client_id: row._id
+          client_id: row._id,
+          isVerified
         });
         setReload(true)
       } catch (error) {
@@ -65,7 +67,7 @@ export default function RecentTable({ ...props }) {
     }
 
     async function Delete() {
-      try {        
+      try {
         let { success, result, message } = await request.delete(entity, row._id, {});
         console.log(success, result, message)
         if (isSuccess) {
@@ -75,19 +77,17 @@ export default function RecentTable({ ...props }) {
         console.log(error);
       }
     }
-
     return (
       <Menu style={{ width: 130 }}>
-        {modify.verify && (
-          row.isVerified ? (
-            <Menu.Item icon={<CloseOutlined />} onClick={Verification} key="verification">
-              Reject verify
-            </Menu.Item>
-          ) : (
-            <Menu.Item icon={<CheckOutlined />} onClick={Verification} key="verification">
+        {(modify.verify && row.callReserve.length > 0 && new Date() > new Date(row.callReserve[0].reserveTime)) && (
+          <>
+            <Menu.Item icon={<CheckOutlined />} onClick={() => { Verification(true) }} key="verify">
               Approve verify
             </Menu.Item>
-          )
+            <Menu.Item icon={<CloseOutlined />} onClick={() => Verification(false)} key="unverify">
+              Reject verify
+            </Menu.Item>
+          </>
         )}
         {modify.status && (
           <Menu.Item icon={<CheckOutlined />} onClick={Edit} key="status">

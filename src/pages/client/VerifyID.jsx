@@ -85,10 +85,9 @@ const VerifyID = () => {
     },
     {
       title: '',
-      content: <VerifyFace setIsDone={setIsDone} setIsProgress={setIsProgress} faceDescriptor={faceDescriptor} />,
+      content: <VerifyFace finish={finish} setIsProgress={setIsProgress} faceDescriptor={faceDescriptor} />,
     },
   ];
-  console.log(isDone, 'isDone')
   return (
     <>
       <Layout className="layout">

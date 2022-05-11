@@ -20,10 +20,13 @@ export default function ClientList() {
     {
       title: "Verification",
       dataIndex: "isVerified",
-      render: (isVerified) => {
+      render: (isVerified, row) => {
         let color = !isVerified ? "volcano" : "green";
-
-        return <Tag color={color}>{isVerified ? 'Verified' : 'Awaiting verification'}</Tag>;
+        let text = isVerified ? 'Verified' : 'Awaiting verification';
+        if(row.callReserve.length > 0 && !isVerified){
+          text = new Date() > new Date(row.callReserve[0].reserveTime) ? 'Rejected' : 'Awaiting Call Verification'
+        }
+        return <Tag color={color}>{text}</Tag>;
       },
     },
     {
@@ -47,7 +50,7 @@ export default function ClientList() {
                 Client List
               </h3>
             </div>            
-            <ClientTable entity={"client"} dataTableColumns={leadColumns} modify={{ delete: true, verify: true }} title={"Client"} />
+            <ClientTable entity={"client"} url={"client/verify_list"} dataTableColumns={leadColumns} modify={{ delete: true, verify: true }} title={"Client"} />
           </div>
         </Col>
       </Row>

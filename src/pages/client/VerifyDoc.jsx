@@ -30,8 +30,8 @@ const verifyNation = (lines) => {
         if (month <= 0) return;
         birthDate = `${date[0]}-${month}-${textArr[index - 2]}`;
         if (!moment(birthDate)) return;
-        lastName = (lines[i - 2] && lines[i - 2].LineText)
-        firstName = (lines[i - 3] && lines[i - 3].LineText)
+        lastName = (lines[i - 2] && lines[i - 2].Words[1].WordText)
+        firstName = (lines[i - 3] && lines[i - 3].Words[1].WordText)
       }
     }
   })
@@ -80,7 +80,7 @@ const extractName = (temp) => {
   temp.split(' ').forEach(val => {
     if (!name.length && val && /[A-z][A-z]/g.test(val)) name = val;
   })
-  return name.replace(/[^A-z]/g, '');
+  return name.replace(/[^A-z]/g, '').toUpperCase();
 }
 
 const checkResult = (firstName, lastName, birthDate) => {
@@ -124,7 +124,7 @@ const Constants = {
 
 const VerifyDoc = ({ ...props }) => {
   const { docType, setUserInfo, setIsProgress, setFaceDescriptor } = props;
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [isSuccess, setIsSuccess] = useState(0);
   const docInfo = Constants[docType];
   const canvasRef = useRef(null);
@@ -185,7 +185,8 @@ const VerifyDoc = ({ ...props }) => {
           'base64Image': canvas.toDataURL(),
           'isOverlayRequired': true,
           'language': docInfo.lang,
-          // 'detectOrientation': true,
+          'scale': false,
+          'detectOrientation': true,
           'OCREngine': docInfo.engine,
         }),
         url: 'https://apipro2.ocr.space/parse/image'
@@ -193,7 +194,7 @@ const VerifyDoc = ({ ...props }) => {
       axios(options).then(async (res) => {
         console.log(res)
         if (res.data.IsErroredOnProcessing || res.data.ParsedResults.length == 0) {
-          resolve({ isSuccess: false, message: 'Verify failed' })
+          resolve({ isSuccess: false, messageText: 'Verify failed' })
           return
         }
         console.log(res.data.ParsedResults[0].TextOverlay.Lines)
@@ -208,60 +209,17 @@ const VerifyDoc = ({ ...props }) => {
           if (singleResult) {
             setFaceDescriptor(singleResult.descriptor)
             setUserInfo(verifyRes, true)
-            resolve({ isSuccess: true, message: 'Verify Success' })
+            resolve({ isSuccess: true, messageText: 'Verify Success' })
           }
         }
         else {
-          resolve({ isSuccess: false, message: 'Verify failed' })
+          resolve({ isSuccess: false, messageText: 'Verify failed' })
         }
       })
     });
-
-
-    // return new Promise((resolve, reject) => {
-    //   const canvas = canvasRef.current;
-    //   const ctx = canvas.getContext('2d');
-    //   ctx.putImageData(preprocessImage(profileRef.current, threshold), 0, 0);
-    //   const dataUrl = canvas.toDataURL("image/jpeg");
-    //   Tesseract.recognize(
-    //     dataUrl, docInfo.lang,
-    //     {
-    //       logger: m => console.log(m)
-    //     }
-    //   )
-    //     .catch(err => {
-    //       console.error(err);
-    //       resolve({ isSuccess: false, message: 'verify error' })
-    //     })
-    //     .then(async result => {
-    //       console.log(result.data.text)
-    //       let verifyRes = docInfo.verify(result.data.lines)
-    //       console.log(verifyRes)
-    //       if (verifyRes.isSuccess) {
-    //         const option = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.3 });
-    //         const singleResult = await faceapi
-    //           .detectSingleFace(profileRef.current, option)
-    //           .withFaceLandmarks()
-    //           .withFaceDescriptor()
-
-    //         if (singleResult) {
-    //           setFaceDescriptor(singleResult.descriptor)
-    //           setUserInfo(verifyRes, true)
-    //           resolve({ isSuccess: true, message: 'Verify Success' })
-    //         }
-    //       }
-    //       // threshold = threshold - 50;
-    //       // if(threshold > 300){
-    //       //   verifyDoc(threshold);
-    //       // }
-    //       else {
-    //         resolve({ isSuccess: false, message: 'Verify failed' })
-    //       }
-    //     })
-    // })
   }
 
-  const Capture = () => {
+  const Capture = async () => {
     // setTimeout(() => {
     message.info('Verifying')
     setLoading(true);
@@ -271,7 +229,12 @@ const VerifyDoc = ({ ...props }) => {
     let ctx = canvas.getContext('2d');
     const video = playRef.current;
     ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight)
-    verifyDoc(docInfo.threshold);
+    let { isSuccess, messageText } = await verifyDoc(docInfo.threshold);
+    if (isSuccess) message.success(messageText)
+    if (!isSuccess) message.error(messageText)
+    setLoading(false)
+    setIsProgress(false)
+    setIsSuccess(isSuccess ? 1 : 2);
     // }, 3000)
   }
   const Retry = () => {
@@ -319,8 +282,9 @@ const VerifyDoc = ({ ...props }) => {
           }
           ctx.restore();
           const result = await verifyDoc(docInfo.threshold);
+          console.log(result)
           isSuccess = result.isSuccess;
-          messageText = result.message;
+          messageText = result.messageText;
         }
         if (isSuccess) message.success(messageText)
         if (!isSuccess) message.error(messageText)
@@ -339,7 +303,7 @@ const VerifyDoc = ({ ...props }) => {
         <Col span={24} md={8}>
           <List
             size="small"
-            height="100%"
+            style={{ height: '100%' }}
             header={<div className="text-center bold">Photo requirements <Divider /></div>}
             bordered
             dataSource={data}
@@ -360,8 +324,8 @@ const VerifyDoc = ({ ...props }) => {
           isSuccess == 1 ? '' :
             <Button type="danger" onClick={Retry}>Retry</Button>
         ) : (<>
-          <Button type="primary" onClick={Capture} className="hidden">Capture</Button>
           <input name="image" type="file" id="imageInput" accept="image/*" onChange={onChange} ref={testRef} />
+          <Button type="primary" onClick={Capture}>Capture</Button>
         </>
         )}
       </Row>

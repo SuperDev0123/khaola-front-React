@@ -11,7 +11,7 @@ const data = [
 ];
 
 const VerifyFace = ({ ...props }) => {
-  const { setIsDone, setIsProgress, faceDescriptor } = props;
+  const { finish, setIsProgress, faceDescriptor } = props;
   const [isSuccess, setIsSuccess] = React.useState(0);
   const [loading, setLoading] = React.useState(true);
   const canvasRef = useRef(null);
@@ -58,7 +58,7 @@ const VerifyFace = ({ ...props }) => {
     loadModels();
   }, []);
 
-  const VerifyFace = async () => {
+  const verifyFace = async () => {
     return new Promise(async (resolve, reject) => {
       const canvas = canvasRef.current;
       const ctx = canvas.getContext('2d');
@@ -70,29 +70,37 @@ const VerifyFace = ({ ...props }) => {
         .withFaceLandmarks()
         .withFaceDescriptors()
       if (!results.length) {
-        resolve({ isSuccess: false, message: 'Please photo your entire face' })
+        resolve({ isSuccess: false, messageText: 'Please photo your entire face' })
         return
       }
       const faceMatcher = new faceapi.FaceMatcher(results)
       const bestMatch = faceMatcher.findBestMatch(faceDescriptor)
       console.log(bestMatch)
       if (bestMatch.distance > 0.5) {
-        resolve({ isSuccess: false, message: 'Face verify failed' })
+        resolve({ isSuccess: false, messageText: 'Face verify failed' })
         return
       }
-      resolve({ isSuccess: true, message: 'Face verify success' });
+      resolve({ isSuccess: true, messageText: 'Face verify success' });
     })
   }
 
-  const Capture = () => {
+  const Capture = async () => {
     // setTimeout(async () => {
     message.info('Verifying')
     setLoading(true);
     setIsProgress(true);
     playRef.current.pause();
-    setTimeout(VerifyFace, 1000);
+    let { isSuccess, messageText } = await verifyFace();
+
     // VerifyFace();
-    return
+    if (!isSuccess) message.error(messageText)
+    if (isSuccess) {
+      message.success(messageText)
+      await finish();
+    }
+    setLoading(false)
+    setIsProgress(false)
+    setIsSuccess(isSuccess ? 1 : 2);
     // }, 3000)
   }
   const Retry = () => {
@@ -125,7 +133,7 @@ const VerifyFace = ({ ...props }) => {
         else {
           ctx.drawImage(myImage, 0, 0, canvas.width, canvas.height); // Draws the image on 
         }
-        let { isSuccess, messageText } = await VerifyFace();
+        let { isSuccess, messageText } = await verifyFace();
         if (!isSuccess) {
           if (angle > 0) {
             ctx.translate(canvas.height * 0.5, canvas.width * 0.5);
@@ -140,12 +148,15 @@ const VerifyFace = ({ ...props }) => {
             ctx.drawImage(myImage, 0, 0, canvas.width, canvas.height); // Draws the image on 
           }
           ctx.restore();
-          const result = await VerifyFace();
+          const result = await verifyFace();
           isSuccess = result.isSuccess;
-          messageText = result.message;
+          messageText = result.messageText;
         }
-        if (isSuccess) message.success(messageText)
         if (!isSuccess) message.error(messageText)
+        if (isSuccess) {
+          message.success(messageText)
+          await finish();
+        }
         setLoading(false)
         setIsProgress(false)
         setIsSuccess(isSuccess ? 1 : 2);
@@ -160,7 +171,7 @@ const VerifyFace = ({ ...props }) => {
         <Col span={24} md={8}>
           <List
             size="small"
-            height="100%"
+            style={{ height: '100%' }}
             header={<div className="text-center bold">Photo requirements <Divider /></div>}
             bordered
             dataSource={data}
@@ -181,8 +192,8 @@ const VerifyFace = ({ ...props }) => {
             <Button type="danger" onClick={Retry}>Retry</Button>
         ) : (
           <>
-            <Button type="primary" onClick={Capture} className="hidden">Capture</Button>
             <input type="file" id="imageInput" accept="image/*" onChange={onChange} />
+            <Button type="primary" onClick={Capture}>Capture</Button>
           </>
         )}
       </Row>

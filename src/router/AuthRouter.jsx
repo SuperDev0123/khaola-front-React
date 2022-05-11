@@ -20,6 +20,10 @@ const EmailVerify = lazy(() =>
   import(/*webpackChunkName:'EmailVerify'*/ "@/pages/auth/EmailVerify")
 );
 
+const Meeting = lazy(() =>
+  import(/*webpackChunkName:'Meeting'*/ "@/pages/auth/Meeting")
+);
+
 const NotFound = lazy(() =>
   import(/*webpackChunkName:'NotFoundPage'*/ "@/pages/NotFound")
 );
@@ -31,6 +35,7 @@ export default function AuthRouter() {
       <AnimatePresence exitBeforeEnter initial={false}>
         <Switch location={location} key={location.pathname}>
           <PublicRoute path="/verify/:id/:token" component={EmailVerify} exact />
+          <PublicRoute path="/meeting/" component={Meeting} exact />
           <PublicRoute component={Register} path="/register" exact />
           <PublicRoute component={Logout} path="/logout" exact />
           <PublicRoute

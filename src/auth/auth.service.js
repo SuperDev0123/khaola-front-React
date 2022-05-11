@@ -10,7 +10,7 @@ import { getCookie, setCookie, deleteCookie } from "./cookie";
 export const login = async (loginAdminData) => {
   try {
     const response = await axios.post(
-      API_BASE_URL + `login?timestamp=${new Date().getTime()}`,
+      API_BASE_URL + `login`,
       loginAdminData
     );
     token.set(response.data.result.token);

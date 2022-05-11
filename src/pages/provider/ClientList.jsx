@@ -1,21 +1,25 @@
 import React, { useRef, useState } from "react";
 import { Button, Row, Col, Tag } from "antd";
 import { DashboardLayout } from "@/layout";
-import ClientTable from "@/components/ClientTable";
+// import ClientTable from "@/components/ClientTable";
+import EditableTable from "@/components/EditableTable";
 
 export default function ClientList() {
   const leadColumns = [
     {
       title: "First Name",
       dataIndex: "firstName",
+      editable: true,
     },
     {
       title: "Last Name",
       dataIndex: "lastName",
+      editable: true,
     },
     {
       title: "Email",
       dataIndex: "email",
+      editable: true,
     },
     {
       title: "Verification",
@@ -47,7 +51,7 @@ export default function ClientList() {
                 Client List
               </h3>
             </div>            
-            <ClientTable entity={"client"} url={"client/my_list"} dataTableColumns={leadColumns} modify={{ delete: true, add: true }} title={"Client"} />
+            <EditableTable entity={"client"} url={"client/my_list"} dataTableColumns={leadColumns} modify={{ delete: true, add: true }} title={"Client"} />
           </div>
         </Col>
       </Row>

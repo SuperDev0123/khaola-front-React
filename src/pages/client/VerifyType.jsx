@@ -15,7 +15,7 @@ const VerifyType = () => {
   return (
     (result && <div className='email-verify'>
       <img src={success} alt="success_img" className='success_img' />
-      <h2>{result.verify ? 'Client' : 'Email'} verified successfully</h2>
+      <h2>{result.verify ? 'Identity' : 'Email'} verified successfully</h2>
       <Space />
       {result.verify ? '' : (
         result.reserved ? 'You are already reserve video call.' :
