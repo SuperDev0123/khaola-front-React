@@ -122,16 +122,20 @@ const VerifyFace = ({ ...props }) => {
       var myImage = new Image(); // Creates image object
       myImage.src = e.target.result; // Assigns converted image to image object
       myImage.onload = async function (ev) {
-        let angle = myImage.width < myImage.height ? 90 : 0;
+        let rate = myImage.width / myImage.height;
+        let canvasRate = canvas.width / canvas.height;
+        let angle = 0;
         if (angle > 0) {
           ctx.translate(canvas.width * 0.5, canvas.height * 0.5);
           ctx.rotate(90 * Math.PI / 180)
           ctx.translate(-canvas.height * 0.5, -canvas.width * 0.5);
-          ctx.drawImage(myImage, 0, 0, canvas.height, canvas.width); // Draws the image on 
+          let { width, height } = calcResoul(canvas.height, canvas.width, rate)
+          ctx.drawImage(myImage, 0, 0, width, height); // Draws the image on 
           ctx.restore();
         }
         else {
-          ctx.drawImage(myImage, 0, 0, canvas.width, canvas.height); // Draws the image on 
+          let { width, height } = calcResoul(canvas.height, canvas.width, rate)
+          ctx.drawImage(myImage, 0, 0, width, height); // Draws the image on 
         }
         let { isSuccess, messageText } = await verifyFace();
         if (!isSuccess) {
@@ -139,13 +143,15 @@ const VerifyFace = ({ ...props }) => {
             ctx.translate(canvas.height * 0.5, canvas.width * 0.5);
             ctx.rotate(180 * Math.PI / 180)
             ctx.translate(-canvas.height * 0.5, -canvas.width * 0.5);
-            ctx.drawImage(myImage, 0, 0, canvas.height, canvas.width); // Draws the image on 
+            let { width, height } = calcResoul(canvas.height, canvas.width, rate)
+            ctx.drawImage(myImage, 0, 0, width, height); // Draws the image on 
           }
           else {
             ctx.translate(canvas.width * 0.5, canvas.height * 0.5);
             ctx.rotate(180 * Math.PI / 180)
             ctx.translate(-canvas.height * 0.5, -canvas.width * 0.5);
-            ctx.drawImage(myImage, 0, 0, canvas.width, canvas.height); // Draws the image on 
+            let { width, height } = calcResoul(canvas.height, canvas.width, rate)
+            ctx.drawImage(myImage, 0, 0, width, height); // Draws the image on 
           }
           ctx.restore();
           const result = await verifyFace();
@@ -162,6 +168,15 @@ const VerifyFace = ({ ...props }) => {
         setIsSuccess(isSuccess ? 1 : 2);
       }
     }
+  }
+
+  const calcResoul = (width, height, imgRate) => {
+    let canvasRate = width / height;
+    if (canvasRate > imgRate) {
+      return { width: height * imgRate , height: height }
+    }
+    else
+      return { width: width, height: width / imgRate }
   }
 
   return (
