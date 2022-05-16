@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Tag, Table, Select, Pagination, Row, Col, Calendar } from "antd";
-import { ContainerOutlined, ScheduleOutlined, CarOutlined, ConsoleSqlOutlined } from '@ant-design/icons';
+import { Tag, Table, Button, Pagination, Row, Col, Calendar } from "antd";
+import { ContainerOutlined, ScheduleOutlined, CarOutlined, ConsoleSqlOutlined, VideoCameraOutlined, GoogleOutlined } from '@ant-design/icons';
 import { request } from "@/request";
 import useFetch from "@/hooks/useFetch";
 import { DashboardLayout } from "@/layout";
@@ -45,11 +45,26 @@ const ConfirmInfo = () => {
         }
         return <Tag color={color}>{text}</Tag>;
       },
+    }, {
+      title: "Join",
+      dataIndex: "userId",
+      render: (user, row) => {
+        let now = new Date();
+        if (now > new Date(row.reserveTime) && !user.isVerified) {
+          return <Button type="primary" htmlType="submit" className="" onClick={()=>onJoin(row.url)}>
+            <GoogleOutlined /> JOIN
+          </Button>
+        }
+        return '';
+      },
     },
   ];
-  console.log(leadColumns)
+
+  const onJoin = (url) => {
+    window.open(url, "_blank")
+  }
+
   const { result, isLoading, isSuccess } = useFetch(asyncList, reload);
-  console.log(result, isLoading, isSuccess)
   if (result && reload) setReload(false)
   const paginationItems = () => {
     if (isSuccess && result) return result.slice(currentPage * showSize - showSize, currentPage * showSize);

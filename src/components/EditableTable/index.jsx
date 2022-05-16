@@ -4,6 +4,7 @@ import AddClientForm from "@/components/AddClientForm";
 import useFetch from "@/hooks/useFetch";
 import { request } from "@/request";
 import Modal from "@/components/Modal";
+import { DeleteOutlined, DeleteTwoTone, EditTwoTone } from '@ant-design/icons';
 
 
 const EditableCell = ({
@@ -78,10 +79,19 @@ export default function EditableTable({ ...props }) {
     }
   };
 
+  const onDelete = async (key) => {
+    try {
+      await request.delete(entity, key)
+      setReload(true);
+    } catch (errInfo) {
+      console.log('Validate Failed:', errInfo);
+    }
+  }
+
   const columns = [
     ...dataTableColumns,
     {
-      title: 'operation',
+      title: 'Edit',
       dataIndex: 'operation',
       render: (_, record) => {
         const editable = isEditing(record);
@@ -96,13 +106,18 @@ export default function EditableTable({ ...props }) {
               Save
             </Typography.Link>
             <Popconfirm title="Sure to cancel?" onConfirm={cancel}>
-              <a>Cancel</a>
+              <a style={{color: '#d4380d'}}>Cancel</a>
             </Popconfirm>
           </span>
         ) : (
-          <Typography.Link disabled={editingKey !== ''} onClick={() => edit(record)}>
-            Edit
-          </Typography.Link>
+          <>
+            <Typography.Link disabled={editingKey !== ''} onClick={() => edit(record)} style={{marginRight: 8}}>
+              <EditTwoTone twoToneColor="#52c41a" />
+            </Typography.Link>
+            <Popconfirm title="Sure to delete?" onConfirm={() => onDelete(record._id)}>
+              <DeleteTwoTone twoToneColor="#d4380d" />
+            </Popconfirm>
+          </>
         );
       },
     },
