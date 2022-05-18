@@ -30,8 +30,8 @@ const verifyNation = (lines) => {
         if (month <= 0) return;
         birthDate = `${date[0]}-${month}-${textArr[index - 2]}`;
         if (!moment(birthDate)) return;
-        lastName = (lines[i - 2] && lines[i - 2].Words[1].WordText)
-        firstName = (lines[i - 3] && lines[i - 3].Words[1].WordText)
+        lastName = (lines[i - 2] && lines[i - 2].Words && lines[i - 2].Words[1] && lines[i - 2].Words[1].WordText)
+        firstName = (lines[i - 3] && lines[i - 3].Words && lines[i - 3].Words[1] && lines[i - 3].Words[1].WordText)
       }
     }
   })
@@ -49,8 +49,10 @@ const verifyDriving = (lines) => {
       let date = temp.match(/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/);
       if (date && isStart) {
         birthDate = date[0];
-        lastName = extractName(lines[index - 2].LineText)
-        firstName = extractName(lines[index - 3].LineText)
+        if(index > 2){
+          lastName = extractName(lines[index - 2].LineText)
+          firstName = extractName(lines[index - 3].LineText)
+        }
       }
       if (date) isStart = true;
     }
@@ -67,8 +69,10 @@ const verifyPassport = (lines) => {
       let date = temp.match(/[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]/);
       if (date) {
         birthDate = date[0];
-        lastName = extractName(lines[index - 2].LineText)
-        firstName = extractName(lines[index - 3].LineText)
+        if(index > 2){
+          lastName = extractName(lines[index - 2].LineText)
+          firstName = extractName(lines[index - 3].LineText)
+        }
       }
     }
   })
