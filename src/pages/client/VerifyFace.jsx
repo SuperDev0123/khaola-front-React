@@ -76,7 +76,7 @@ const VerifyFace = ({ ...props }) => {
       const faceMatcher = new faceapi.FaceMatcher(results)
       const bestMatch = faceMatcher.findBestMatch(faceDescriptor)
       console.log(bestMatch)
-      if (bestMatch.distance > 0.5) {
+      if (bestMatch.distance > 0.6) {
         resolve({ isSuccess: false, messageText: 'Face verify failed' })
         return
       }
@@ -90,8 +90,12 @@ const VerifyFace = ({ ...props }) => {
     setLoading(true);
     setIsProgress(true);
     playRef.current.pause();
+    let canvas = canvasRef.current;
+    let ctx = canvas.getContext('2d');
+    const video = playRef.current;
+    ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight)
     let { isSuccess, messageText } = await verifyFace();
-
+    console.log(isSuccess, messageText)
     // VerifyFace();
     if (!isSuccess) message.error(messageText)
     if (isSuccess) {
