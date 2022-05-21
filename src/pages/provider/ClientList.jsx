@@ -24,10 +24,11 @@ export default function ClientList() {
     {
       title: "Verification",
       dataIndex: "isVerified",
-      render: (isVerified) => {
+      render: (isVerified, row) => {
+        console.log(isVerified, row)
         let color = !isVerified ? "volcano" : "green";
 
-        return <Tag color={color}>{isVerified ? 'Verified' : 'Awaiting verification'}</Tag>;
+        return <Tag color={color}>{isVerified ? 'Verified' : (row.isRejected ? 'Rejected' : 'Awaiting verification')}</Tag>;
       },
     },
     {

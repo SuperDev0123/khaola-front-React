@@ -11,9 +11,11 @@ const VerifyType = () => {
     return request.get('client/is_verify');
   };
   const { result, isLoading, isSuccess } = useFetch(asyncList);
+  
   console.log(result)
   return (
-    (result && <div className='email-verify'>
+    
+    (result && ( result.rejected ? <div className='email-verify'><h1 style={{fontSize: 32}}>You are rejected to verify</h1></div> :  <div className='email-verify'>
       <img src={success} alt="success_img" className='success_img' />
       <h2 style={{paddingTop: 8}}>{result.reserved ? 'You are already reserve video call. Please wait for a call' : ((result.verify ? 'Identity' : 'Email') + ' verified successfully')}</h2>
       <Space />
@@ -33,7 +35,7 @@ const VerifyType = () => {
             </Link></>
       )}
     </div>)
-  );
+  ));
 };
 
 export default VerifyType;

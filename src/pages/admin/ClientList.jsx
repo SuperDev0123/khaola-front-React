@@ -26,6 +26,10 @@ export default function ClientList() {
         if(row.callReserve.length > 0 && !isVerified){
           text = new Date() > new Date(row.callReserve[0].reserveTime) ? 'Rejected' : 'Awaiting Call Verification'
         }
+        if(row.isRejected) {
+          text = 'Rejected';
+          color = 'volcano';
+        }
         return <Tag color={color}>{text}</Tag>;
       },
     },

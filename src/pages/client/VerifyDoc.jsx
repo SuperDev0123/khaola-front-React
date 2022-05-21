@@ -32,8 +32,7 @@ const verifyNation = (lines) => {
         if (!moment(birthDate)) return;
         let temp = i - 2;
         while(temp > -1 && temp < lines.length){
-          console.log("gesgsagas")
-          console.log(lines[temp].LineText)
+          if(firstName && lastName) break;
           if(lines[temp] && lines[temp].LineText && /[0-9][0-9]/g.test(lines[temp].LineText)){
             firstName = lines[temp+1].Words[0].WordText;
             break;
@@ -335,7 +334,7 @@ const VerifyDoc = ({ ...props }) => {
           <video playsInline autoPlay muted ref={playRef} width="100%" height="100%" />
           <video playsInline autoPlay muted width={1000} height={500} ref={screenshotRef} className="hidden" />
           <canvas ref={canvasRef} width={1000} height={500} style={{ position: 'fixed', left: 0, top: 0 }} className="hidden"></canvas>
-          <canvas ref={profileRef} width={1000} height={500} style={{ position: 'fixed', left: 0, top: 0 }} className="hidden1"></canvas>
+          <canvas ref={profileRef} width={1000} height={500} style={{ position: 'fixed', left: 0, top: 0 }} className="hidden"></canvas>
         </Col>
       </Row>
       <Row style={{ padding: 10 }} align="end">

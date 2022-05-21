@@ -3,6 +3,9 @@ import { Space, Typography, Button, Checkbox, Layout, Row, Col, Divider } from "
 import { Steps, message } from 'antd';
 import { ContainerOutlined, ScheduleOutlined, CarOutlined } from '@ant-design/icons';
 import { request } from "@/request";
+import { useSelector } from "react-redux";
+import { selectAuth } from "@/redux/auth/selectors";
+
 const VerifyDoc = lazy(() =>
   import(/*webpackChunkName:'VerifyDoc'*/ "@/pages/client/VerifyDoc")
 );
@@ -26,6 +29,10 @@ const VerifyID = () => {
   const [userInfo, setUserInfo] = useState({});
   const [isProgress, setIsProgress] = useState(false);
   const [faceDescriptor, setFaceDescriptor] = useState(null);
+
+  let {current: currentUser} = useSelector(selectAuth);
+  console.log(currentUser)
+  if(currentUser.isRejected) window.location.href = '/'
 
   const next = () => {
     setIsDone(false);

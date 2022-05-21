@@ -2,6 +2,10 @@ import React, { useState, useRef, useEffect } from "react";
 import { Spin, Typography, Button, List, Row, Col, Divider, message } from "antd";
 import { ContainerOutlined, ScheduleOutlined, CarOutlined } from '@ant-design/icons';
 import * as faceapi from 'face-api.js';
+import { selectAuth } from "@/redux/auth/selectors";
+import storePersist from "@/redux/storePersist";
+import { useSelector } from "react-redux";
+import { request } from "@/request";
 
 const data = [
   "1. Displat entire face",
@@ -13,11 +17,12 @@ const data = [
 const VerifyFace = ({ ...props }) => {
   const { finish, setIsProgress, faceDescriptor } = props;
   const [isSuccess, setIsSuccess] = React.useState(0);
+  const [remainTimes, setRemainTimes] = React.useState(3);
   const [loading, setLoading] = React.useState(true);
   const canvasRef = useRef(null);
   const screenshotRef = useRef(null);
   const playRef = useRef(null);
-
+  let auth = useSelector(selectAuth);
   let isLoaded = {
     modal: false,
     stream: false,
@@ -77,10 +82,22 @@ const VerifyFace = ({ ...props }) => {
       const bestMatch = faceMatcher.findBestMatch(faceDescriptor)
       console.log(bestMatch)
       if (bestMatch.distance > 0.6) {
-        resolve({ isSuccess: false, messageText: 'Face verify failed' })
-        return
+        console.log('remainTimes', remainTimes)
+        if (remainTimes < 2) {
+          let result = await request.get('/client/reject')
+          console.log(result)
+          auth.current.isRejected = true
+          storePersist.set("auth", auth);
+          window.location.href = '/'
+        }
+        else {
+          resolve({ isSuccess: false, messageText: `Face verify failed, You can try ${remainTimes - 1} times more` })
+        }
       }
-      resolve({ isSuccess: true, messageText: 'Face verify success' });
+      else {
+        resolve({ isSuccess: true, messageText: 'Face verify success' });
+      }
+      setRemainTimes(remainTimes - 1);
     })
   }
 
@@ -177,7 +194,7 @@ const VerifyFace = ({ ...props }) => {
   const calcResoul = (width, height, imgRate) => {
     let canvasRate = width / height;
     if (canvasRate > imgRate) {
-      return { width: height * imgRate , height: height }
+      return { width: height * imgRate, height: height }
     }
     else
       return { width: width, height: width / imgRate }
