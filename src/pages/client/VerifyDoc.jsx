@@ -30,8 +30,25 @@ const verifyNation = (lines) => {
         if (month <= 0) return;
         birthDate = `${date[0]}-${month}-${textArr[index - 2]}`;
         if (!moment(birthDate)) return;
-        lastName = (lines[i - 2] && lines[i - 2].Words && lines[i - 2].Words[1] && lines[i - 2].Words[1].WordText)
-        firstName = (lines[i - 3] && lines[i - 3].Words && lines[i - 3].Words[1] && lines[i - 3].Words[1].WordText)
+        let temp = i - 2;
+        while(temp > -1 && temp < lines.length){
+          console.log("gesgsagas")
+          console.log(lines[temp].LineText)
+          if(lines[temp] && lines[temp].LineText && /[0-9][0-9]/g.test(lines[temp].LineText)){
+            firstName = lines[temp+1].Words[0].WordText;
+            break;
+          }
+          if(!lastName){
+            lastName = (lines[temp] && lines[temp].Words && lines[temp].Words[1] && lines[temp].Words[1].WordText)
+            temp--
+            continue;
+          }
+          if(!firstName){
+            firstName = (lines[temp] && lines[temp].Words && lines[temp].Words[1] && lines[temp].Words[1].WordText)
+          }
+          console.log(firstName, lastName)
+          temp--
+        }
       }
     }
   })
@@ -318,7 +335,7 @@ const VerifyDoc = ({ ...props }) => {
           <video playsInline autoPlay muted ref={playRef} width="100%" height="100%" />
           <video playsInline autoPlay muted width={1000} height={500} ref={screenshotRef} className="hidden" />
           <canvas ref={canvasRef} width={1000} height={500} style={{ position: 'fixed', left: 0, top: 0 }} className="hidden"></canvas>
-          <canvas ref={profileRef} width={1000} height={500} style={{ position: 'fixed', left: 0, top: 0 }} className="hidden"></canvas>
+          <canvas ref={profileRef} width={1000} height={500} style={{ position: 'fixed', left: 0, top: 0 }} className="hidden1"></canvas>
         </Col>
       </Row>
       <Row style={{ padding: 10 }} align="end">
