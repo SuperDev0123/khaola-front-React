@@ -19,6 +19,12 @@ const ConfirmInfo = () => {
 
   const leadColumns = [
     {
+      title: "User Name",
+      dataIndex: "userId",
+      render: (user) => {
+        return `${user.firstName} ${user.lastName}`;
+      },
+    }, {
       title: "Start Time",
       dataIndex: "reserveTime",
     }, {
@@ -30,7 +36,7 @@ const ConfirmInfo = () => {
     }, {
       title: "Status",
       dataIndex: "userId",
-      render: (user, row) => {        
+      render: (user, row) => {
         let color = !user.isVerified ? "volcano" : "green";
         let text = user.isVerified ? 'Verified' : 'Awaiting';
         text = !user.isRejected ? text : 'Rejected';
@@ -79,7 +85,7 @@ const ConfirmInfo = () => {
     try {
       const url = `${API_BASE_URL}admin/verify_client`;
       await request.post(url, { id, is_verify: false });
-      setReload(!reload);
+      setReload(true);
     } catch (errInfo) {
       console.log('Validate Failed:', errInfo);
     }
@@ -91,7 +97,7 @@ const ConfirmInfo = () => {
       await request.post(url, {
         id, is_verify: true,
       });
-      setReload(!reload);
+      setReload(true);
     } catch (errInfo) {
       console.log('Validate Failed:', errInfo);
     }
@@ -99,8 +105,8 @@ const ConfirmInfo = () => {
 
   let { result, isLoading, isSuccess } = useFetch(asyncList, reload);
   if (result && reload) setReload(false)
-  if(result && result.length > 0){
-    result = result.filter(elem=>elem.userId != null)
+  if (result && result.length > 0) {
+    result = result.filter(elem => elem.userId != null)
   }
   const paginationItems = () => {
     if (isSuccess && result) return result.slice(currentPage * showSize - showSize, currentPage * showSize);

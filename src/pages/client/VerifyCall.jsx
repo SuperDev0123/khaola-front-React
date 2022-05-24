@@ -13,18 +13,22 @@ const ConfirmInfo = () => {
   const [selectedValue, setSelectedValue] = useState(moment(now).format('YYYY-MM-DD HH:mm'));
   const [selectedTime, setSelectedTime] = useState(moment(now));
   const [loading, setLoading] = React.useState(false);
+  const [reload, setReload] = React.useState(false);
   let reserveList = []
-  const asyncList = () => {
+  let asyncList = () => {
+    console.log(moment(date).format('YYYY-MM-DD'))
     return request.list('client/reserve', { page: moment(date).format('YYYY-MM-DD') });
   };
   // const [reserveList, setReserveList] = useState([]);
   const onSelect = value => {
     setDate(value);
     setSelectedValue(`${value.format('YYYY-MM-DD')} ${selectedTime.format('HH:mm')}`);
+    setReload(true);
   };
 
   const onPanelChange = value => {
     setDate(value)
+    setReload(true);
   };
 
   const onSelectTime = value => {
@@ -44,9 +48,11 @@ const ConfirmInfo = () => {
       window.location.href = '/'
     }
   }
-  const { result, isLoading, isSuccess } = useFetch(asyncList);
+  let { result, isLoading, isSuccess } = useFetch(asyncList, reload);
+  if (isSuccess && result && result.reserveList && reload) setReload(false)
   if (isSuccess && result && result.reserveList)
     reserveList = result.reserveList
+  console.log(reserveList)
   return (
     <Layout style={{ padding: '50px 140px' }}>
       <Typography style={{ fontSize: 30, padding: '30px 0', textAlign: 'center' }}>Select available date and time for verification</Typography>
@@ -131,8 +137,9 @@ const ConfirmInfo = () => {
             dataSource={reserveList}
             renderItem={item => (
               <List.Item>
-                <Typography.Text mark>[{item.userId.firstName} {item.userId.lastName}]</Typography.Text>
-                <br /> {moment(item.reserveTime).format('HH:mm')} ~ {moment(item.reserveTime).add(15, 'minutes').format('HH:mm')}
+                {/* <Typography.Text mark>[{item.userId.firstName} {item.userId.lastName}]</Typography.Text> */}
+                {/* <br />  */}
+                {moment(item.reserveTime).format('HH:mm')} ~ {moment(item.reserveTime).add(15, 'minutes').format('HH:mm')}
               </List.Item>
             )}
           />
