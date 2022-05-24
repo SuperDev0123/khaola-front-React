@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Tag, Table, Button, Pagination, Row, Col, Calendar } from "antd";
-import { ContainerOutlined, ScheduleOutlined, CarOutlined, ConsoleSqlOutlined, VideoCameraOutlined, GoogleOutlined } from '@ant-design/icons';
+import { ContainerOutlined, ScheduleOutlined, CarOutlined, ConsoleSqlOutlined, VideoCameraOutlined, GoogleOutlined, CloseCircleOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { request } from "@/request";
 import useFetch from "@/hooks/useFetch";
 import { DashboardLayout } from "@/layout";
 import ReserveTable from "@/components/ReserveTable";
+import { API_BASE_URL } from "@/config/serverApiConfig";
 import moment from 'moment';
 
 const ConfirmInfo = () => {
@@ -18,12 +19,6 @@ const ConfirmInfo = () => {
 
   const leadColumns = [
     {
-      title: "User Name",
-      dataIndex: "userId",
-      render: (user) => {
-        return `${user.firstName} ${user.lastName}`;
-      },
-    }, {
       title: "Start Time",
       dataIndex: "reserveTime",
     }, {
@@ -38,8 +33,9 @@ const ConfirmInfo = () => {
       render: (user, row) => {
         let color = !user.isVerified ? "volcano" : "green";
         let text = user.isVerified ? 'Verified' : 'Awaiting';
+        text = !user.isRejected ? text : 'Rejected';
         let now = new Date();
-        if (now > new Date(row.reserveTime) && !user.isVerified) {
+        if (now > new Date(row.reserveTime) && !user.isVerified && !user.isRejected) {
           color = !row.status ? "volcano" : "green";
           text = row.status ? 'Present' : 'Absent'
         }
@@ -50,10 +46,26 @@ const ConfirmInfo = () => {
       dataIndex: "userId",
       render: (user, row) => {
         let now = new Date();
-        if (now > new Date(row.reserveTime) && !user.isVerified) {
-          return <Button type="primary" htmlType="submit" className="" onClick={()=>onJoin(row.url)}>
+        if (now > new Date(row.reserveTime) && !user.isVerified && !user.isRejected) {
+          return <Button htmlType="submit" className="" onClick={() => onJoin(row.url)}>
             <GoogleOutlined /> JOIN
           </Button>
+        }
+        return '';
+      },
+    }, {
+      title: "Action",
+      dataIndex: "userId",
+      render: (user, row) => {
+        let now = new Date();
+        if (now > new Date(row.reserveTime)) {
+          return <>
+            <Button type="primary" htmlType="submit" danger onClick={() => onReject(row.userId._id)} style={{ marginRight: 5 }}>
+              <CloseOutlined /> Reject
+            </Button>
+            <Button type="primary" htmlType="submit" onClick={() => onVerify(row.userId._id)}>
+              <CheckOutlined /> Verify
+            </Button></>
         }
         return '';
       },
@@ -62,6 +74,27 @@ const ConfirmInfo = () => {
 
   const onJoin = (url) => {
     window.open(url, "_blank")
+  }
+  const onReject = async (id) => {
+    try {
+      const url = `${API_BASE_URL}admin/verify_client`;
+      await request.post(url, { id, is_verify: false });
+      setReload(!reload);
+    } catch (errInfo) {
+      console.log('Validate Failed:', errInfo);
+    }
+  }
+
+  const onVerify = async (id) => {
+    try {
+      const url = `${API_BASE_URL}admin/verify_client`;
+      await request.post(url, {
+        id, is_verify: true,
+      });
+      setReload(!reload);
+    } catch (errInfo) {
+      console.log('Validate Failed:', errInfo);
+    }
   }
 
   const { result, isLoading, isSuccess } = useFetch(asyncList, reload);
