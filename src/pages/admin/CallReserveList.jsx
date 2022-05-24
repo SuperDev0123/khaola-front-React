@@ -30,7 +30,7 @@ const ConfirmInfo = () => {
     }, {
       title: "Status",
       dataIndex: "userId",
-      render: (user, row) => {
+      render: (user, row) => {        
         let color = !user.isVerified ? "volcano" : "green";
         let text = user.isVerified ? 'Verified' : 'Awaiting';
         text = !user.isRejected ? text : 'Rejected';
@@ -97,8 +97,11 @@ const ConfirmInfo = () => {
     }
   }
 
-  const { result, isLoading, isSuccess } = useFetch(asyncList, reload);
+  let { result, isLoading, isSuccess } = useFetch(asyncList, reload);
   if (result && reload) setReload(false)
+  if(result && result.length > 0){
+    result = result.filter(elem=>elem.userId != null)
+  }
   const paginationItems = () => {
     if (isSuccess && result) return result.slice(currentPage * showSize - showSize, currentPage * showSize);
     return [];
