@@ -54,7 +54,7 @@ export default function ClientList() {
                 Client List
               </h3>
             </div>            
-            <ClientTable entity={"client"} url={"client/verify_list"} dataTableColumns={leadColumns} modify={{ delete: true, verify: true }} title={"Client"} />
+            <ClientTable entity={"client"} url={"client/verify_list"} dataTableColumns={leadColumns} modify={{ delete: true, verify: true }} title={"User"} />
           </div>
         </Col>
       </Row>

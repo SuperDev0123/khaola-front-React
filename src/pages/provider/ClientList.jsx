@@ -52,7 +52,7 @@ export default function ClientList() {
                 Client List
               </h3>
             </div>            
-            <EditableTable entity={"client"} url={"client/my_list"} dataTableColumns={leadColumns} modify={{ delete: true, add: true }} title={"Client"} />
+            <EditableTable entity={"client"} url={"client/my_list"} dataTableColumns={leadColumns} modify={{ delete: true, add: true }} title={"User"} />
           </div>
         </Col>
       </Row>
