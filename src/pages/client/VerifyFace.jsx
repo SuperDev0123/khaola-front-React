@@ -81,7 +81,7 @@ const VerifyFace = ({ ...props }) => {
       const faceMatcher = new faceapi.FaceMatcher(results)
       const bestMatch = faceMatcher.findBestMatch(faceDescriptor)
       console.log(bestMatch)
-      if (bestMatch.distance > 0.6) {
+      if (bestMatch.distance > 0.55) {
         console.log('remainTimes', remainTimes)
         if (remainTimes < 2) {
           let result = await request.get('/client/reject')
