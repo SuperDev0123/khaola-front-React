@@ -1,6 +1,7 @@
 import React from "react";
 import { useParams, Link } from "react-router-dom";
 import success from "./images/success.png"
+import error from "./images/error.png"
 import "./auth.less"
 import { Space } from "antd";
 import useFetch from "@/hooks/useFetch";
@@ -15,7 +16,11 @@ const VerifyType = () => {
   console.log(result)
   return (
     
-    (result && ( result.rejected ? <div className='email-verify'><h1 style={{fontSize: 32}}>You are rejected to verify</h1></div> :  <div className='email-verify'>
+    (result && ( result.rejected ? <div className='email-verify'>
+      <img src={error} alt="error_img" className='success_img' width={150} height={150} />
+      <h1 style={{fontSize: 32}}>You are rejected to verify</h1>
+      </div> :  
+      <div className='email-verify'>
       <img src={success} alt="success_img" className='success_img' />
       <h2 style={{paddingTop: 8}}>{result.reserved ? 'You are already reserve video call. Please wait for a call' : ((result.verify ? 'Identity' : 'Email') + ' verified successfully')}</h2>
       <Space />

@@ -86,6 +86,7 @@ const VerifyFace = ({ ...props }) => {
         if (remainTimes < 2) {
           let result = await request.get('/client/reject')
           console.log(result)
+          
           auth.current.isRejected = true
           storePersist.set("auth", auth);
           window.location.href = '/'
